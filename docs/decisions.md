@@ -1,0 +1,48 @@
+# Decisões atuais e continuidade
+
+18/11/2026 · Kage 0.6.4. Histórico distribuído: 0.1.0→0.2.0→0.3.0→0.4.0→0.5.0→0.6.0→0.6.1→0.6.2→0.6.3→0.6.4. Os pacotes anteriores foram preservados; esta pasta contém a continuação atual.
+
+- Nome comercial único Kage por instrução expressa, mesmo onde o PDF cita variantes. Créditos, laranja, textos em pt-BR e placeholders preservados. O PDF original não foi alterado.
+- A tentativa anterior no Windows teve helper_sandbox_lock_failed. O checkpoint anterior continuou no Linux. Na retomada atual, a cópia 0.5.0 foi recuperada e ampliada para 0.6.0 no Windows, preservando a pasta anterior. O ZIP e os scripts portáteis permitem retomada sem reconstruir o projeto.
+- Express/Mongoose/discord.js e módulos funcionais foram mantidos. Não há migração de framework. Contratos TypeScript/JSDoc e lint foram adicionados sem converter todo o JavaScript.
+- Treze templates continuam editáveis. Atualização de versão é aditiva, comparada e reversível no rascunho; não substitui edições silenciosamente. Boas-vindas e eventos usam as telas próprias, com confirmação separada; escolher template não ativa automação.
+- Posição de cargo é um efeito separado da criação; o progresso registra o que funcionou. Ícones e gradientes dependem de capacidades reais da guilda. Administrator exige proprietário e frase de risco; nunca é padrão do bot.
+- A API não fornece contagem individual comprovada de dois boosts. O preset literal permanece bloqueado; foi implementado benefício identificado de booster ativo + patamar de boosts da guilda, sem duplicar cargo nativo.
+- IA só produz sinal de revisão. O provedor exige aprovação no ambiente e na política, allowlist, timeout e contrato estrito. Nenhum serviço/credencial foi inventado. Captcha externo não foi simulado; botão/reação são desafio de participação.
+- Todos os novos controles começam desativados. Eventos atrasados e sinais de conta recente não são prova de abuso. Automação não concede cargos sensíveis. Quarentena automática retirada por verificação exige recibo próprio da mesma entrada; mudança posterior observada invalida o recibo.
+- Fila queued é recuperável com claim/lease; running incerto não é repetido. Reconciliação humana não chama a API novamente. Rollback só exclui recursos novos, vazios e inalterados com fingerprint; operações antigas sem evidência ficam para revisão manual.
+- Backup preserva estrutura/configuração/templates autorizados, sem mensagens ou concessões individuais. Hash detecta alteração acidental, não é assinatura de terceiros. Restauração é por lote e volta configurações pausadas; referência de cargo não resolvida não abre um canal por omissão.
+- Configuração e intenção de auditoria são gravadas no mesmo CAS/outbox. Outros efeitos guardam intenção/resultado por operação; não se promete atomicidade distribuída entre Discord e banco.
+- Consentimentos são versionados. Exclusão revoga sessões/cancela trabalhos e remove dados próprios, pseudonimizando referências principais necessárias. Não promete apagar cópias baixadas, mensagens Discord, todas as evidências operacionais ou tornar dados anônimos.
+- Regras nativas pertencem ao Discord e continuam com Kage offline/pausado; desativá-las exige ação explícita. Logs Kage armazenam metadados minimizados, com HMAC por guilda e retenção.
+- Dependências fixadas: sharp, ESLint, TypeScript e linkedom; minimatch 11.0.8 fixado por override após alerta do audit no lint. Regressão passou após a atualização. Build e manifesto incluem código/testes/documentos/PDF, sem .env real, node_modules ou dist redundante.
+- 186 testes locais não aprovam produção. A revisão visual automatizada em 320/768/1440px e dois temas foi concluída; permanecem externos: leitor de tela real, configuração e testes Discord/OAuth2/MongoDB, provedor de IA, campos legais/contato/link e revisão responsável. A matriz conserva essas lacunas e as adaptações explícitas acima.
+
+## Checkpoint Windows em 11/11/2026
+
+A cópia 0.5.0 foi recuperada em pasta separada no Windows, preservando a 0.2.0 existente. Instalação, diagnóstico, 159 testes, build, manifesto e migração dry-run passaram; checagem DOM complementar percorreu 18 telas. Não houve alteração do código de execução. A revisão visual ainda está bloqueada pelas ferramentas; Discord/OAuth2/MongoDB e provedor reais não foram usados. Este checkpoint substitui a pendência histórica de execução local no Windows.
+
+## Continuação 0.6.0 no Windows
+
+As edições locais do novo workspace foram preservadas em checkpoint antes de continuar. Por orientação posterior do usuário, assistente e cargos ficam no Construtor de servidores; Segurança e Editor de embeds completos permanecem separados. Mensagens no construtor são somente texto/imagens v1/V2. Política e regras nativas são opt-in no plano, com revisão completa, frase explícita e revalidação por tarefa.
+
+A interface usa a organização administrativa de referência pública Themesberg Figma, com laranja Kage e créditos preservados; não se afirma inspeção do editor Figma ou importação de kit. Novos contratos e testes estão em server-builder.md. A suíte atual tem 180 testes aprovados no Windows; integrações reais e revisão visual continuam pendentes. A documentação Windows anterior fica preservada no histórico do JSON.
+
+## Fechamento 0.6.1 em 18/11/2026
+
+O painel recebeu ajuste visual responsivo e de contraste, revisado em navegador real nas 15 rotas, 320/768/1440px e dois temas, com zero violações axe. Teclado, menu móvel e Escape foram exercitados; leitor de tela real não foi executado. A segurança recebeu ocultação central de credenciais em motivos/transcrições, no-store em autenticação e validação adicional do callback OAuth2. A suíte passou a 181 testes. Staging real continua pendente de credenciais e ambiente próprios, sem segredos no chat.
+
+## Fechamento 0.6.2 em 18/11/2026
+
+A preparação de staging ganhou uma pré-checagem local somente leitura que valida variáveis, OAuth2, bot, permissões e MongoDB sem imprimir segredos. `/ready` passou a separar banco e bot; a demo confirmou o anúncio de rota em região viva e a regra de movimento reduzido. A suíte passou a 186 testes. A variante online depende das credenciais do proprietário e não foi executada; staging real continua sendo o aceite externo.
+
+## Auditoria de segurança 0.6.4 em 18/11/2026
+
+- Roteamento do Express 5 é insensível a caixa; o mapa de escopos não era. Caminhos como `/Security` passavam pela verificação de `view` e chegavam a rotas privilegiadas. `routeScope` e `authorizeDashboard` agora normalizam para minúsculas antes de decidir.
+- A correção vale também para planos já criados: o caminho bruto gravado em `dashboardPath` é reavaliado pela mesma função antes de cada tarefa no worker.
+- A revisão de XSS confirmou escape em todas as prévias dinâmicas e validação estrita de cor, chave e nome no schema compartilhado.
+- Dependências continuam sem vulnerabilidades conhecidas em produção; nenhuma alteração de arquitetura foi necessária.
+
+## Fechamento 0.6.3 em 18/11/2026
+
+O anúncio de rota passou a ser uma função única, deduplicada pela rota e não pelo texto, evitando repetição ao atualizar a mesma tela e cobrindo telas públicas e acessos negados. Os testes verificam anúncio em Documentos, acesso negado, silêncio após atualização e novo anúncio ao trocar de rota negada. A lista de permissões do bot na pré-checagem virou constante única. Nenhum fluxo de negócio mudou e a suíte permanece com 186 testes.

@@ -1,0 +1,48 @@
+{
+  "name": "kage",
+  "version": "0.6.4",
+  "private": true,
+  "type": "module",
+  "description": "Kage: administração modular para Discord e painel web.",
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "demo": "node scripts/preview.js",
+    "register": "node scripts/register.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.js",
+    "build": "node scripts/check.js && node scripts/build.js",
+    "migrate": "node migrations/001-dashboard.js",
+    "doctor": "node scripts/doctor.js",
+    "staging-check": "node scripts/staging-check.js",
+    "verify-release": "node scripts/verify-release.js",
+    "release-manifest": "node scripts/package.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json",
+    "validate": "npm run check && npm run lint && npm run typecheck && npm test",
+    "traceability": "node scripts/traceability.js"
+  },
+  "dependencies": {
+    "connect-mongo": "5.1.0",
+    "discord.js": "14.28.1",
+    "dotenv": "17.2.3",
+    "express": "5.1.0",
+    "express-rate-limit": "8.7.4",
+    "express-session": "1.18.2",
+    "helmet": "8.1.0",
+    "mongoose": "8.24.8",
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "eslint": "10.14.0",
+    "linkedom": "0.18.15",
+    "typescript": "7.0.2"
+  },
+  "overrides": {
+    "minimatch": "11.0.8"
+  }
+}

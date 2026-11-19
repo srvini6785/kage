@@ -1,0 +1,1 @@
+export function colorContrast(hex,background='#17141b'){const luminance=h=>{const rgb=h.slice(1).match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};const a=luminance(hex),b=luminance(background);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);}

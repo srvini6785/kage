@@ -1,0 +1,62 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "minimal",
+  "name": "Minimalista",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "minimal-root",
+      "name": "comunidade-minimal",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "regras",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "minimal-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "geral",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "minimal-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "mídia",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "minimal-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "voz",
+      "type": 2,
+      "topic": "",
+      "private": false,
+      "parentKey": "minimal-root"
+    },
+    {
+      "key": "channel-4",
+      "name": "suporte",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "minimal-root"
+    }
+  ]
+}

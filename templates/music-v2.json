@@ -1,0 +1,54 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "music",
+  "name": "Música e eventos",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "music-root",
+      "name": "comunidade-music",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "agenda",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "music-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "palco",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "music-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "feedback",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "music-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "voz",
+      "type": 2,
+      "topic": "",
+      "private": false,
+      "parentKey": "music-root"
+    }
+  ]
+}

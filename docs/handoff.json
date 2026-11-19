@@ -1,0 +1,202 @@
+{
+  "product": "Kage",
+  "version": "0.6.4",
+  "updatedAt": "2026-11-18",
+  "previousRelease": "Kage_v0.6.3.zip",
+  "resumeInstructions": "RETOMAR_WINDOWS.md",
+  "agentInstructions": "AGENTS.md",
+  "specification": {
+    "file": "Kage_Bot_Dashboard_Briefing_Mestre_v1.1_85_paginas.pdf",
+    "libraryFileId": "libfile_705d950822888191bdc73e699e47e480",
+    "pages": 85,
+    "traceability": "docs/traceability.json",
+    "localPath": "docs/Kage_Bot_Dashboard_Briefing_Mestre_v1.1_85_paginas.pdf",
+    "extractedText": "docs/specification-source.txt"
+  },
+  "currentSourceIsAuthoritative": true,
+  "doNotRebuildFromBaseline": true,
+  "implementedThisStage": [
+    "Construtor unificado Estrutura → Cargos → Mensagens → Segurança, preservando as edições locais",
+    "Segurança e Editor de embeds completos continuam separados; cargos existentes são administrados no Construtor",
+    "Mensagens do projeto limitadas a texto/imagens v1/V2, com canal existente ou planejado confirmado",
+    "Política e novas regras nativas incluídas explicitamente, com revisão completa e confirmação",
+    "RBAC por tarefa, verificação de assets e permissões, dependência de canal e recibos de publicação",
+    "Rascunhos separados, retry explícito, navegação móvel e consulta delegada com metadados mínimos",
+    "Redesign responsivo em 320/768/1440px e temas claro/escuro, com menu móvel, foco e contraste revisados",
+    "Revisão axe em 15 rotas e dois temas sem violações; teclado e Escape verificados; leitor de tela real pendente",
+    "Ocultação de tokens/webhooks/URIs em motivos e transcrições, autenticação sem cache e validação OAuth2",
+    "Pré-checagem de staging somente leitura: variáveis, OAuth2, bot, permissões, MongoDB e endpoints de saúde, sem imprimir segredos",
+    "Diagnóstico /ready separando banco e bot; anúncio de rota em região viva e movimento reduzido no painel",
+    "Anúncio de rota deduplicado por rota, com cobertura de página pública, acesso negado e atualização da mesma tela",
+    "Lista de permissões do bot na pré-checagem centralizada em constante única, sem mudar o resultado",
+    "Auditoria ofensiva local corrigiu contorno de escopo por variação de caixa em rotas do painel",
+    "Revisão de XSS nas prévias do construtor e da estrutura sem sink explorável; schema estrito confirmado",
+    "141 seções mantidas, documentação atualizada e testes de regressão incorporados à suíte"
+  ],
+  "validation": {
+    "product": "Kage",
+    "version": "0.6.4",
+    "date": "2026-11-18",
+    "platform": "win32",
+    "node": "24.15.0",
+    "baseVersion": "0.6.3",
+    "runtimeSourceCodeChanged": true,
+    "dependencyInstall": "Dependências da 0.6.2 reutilizadas; nenhuma adicionada ou removida",
+    "doctor": "passed",
+    "validation": {
+      "syntax": "passed",
+      "lint": "passed",
+      "typedContracts": "passed",
+      "tests": 186,
+      "failed": 0,
+      "previousTests": 186,
+      "additionalTests": 0,
+      "baselineTests": 159,
+      "cumulativeAddedTests": 27
+    },
+    "build": "passed",
+    "manifest": "passed in source and dist",
+    "migration": {
+      "mode": "dry-run",
+      "collections": 28,
+      "destructive": false,
+      "applied": false,
+      "evidenceDate": "2026-11-11"
+    },
+    "traceability": {
+      "sections": 141,
+      "implementedLocal": 79,
+      "verifiedLocal": 15,
+      "partial": 47
+    },
+    "demo": {
+      "url": "http://127.0.0.1:3040",
+      "httpResources": [
+        {
+          "path": "/",
+          "status": 200,
+          "bytes": 6243
+        },
+        {
+          "path": "/runtime.json",
+          "status": 200,
+          "bytes": 16
+        },
+        {
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 45126
+        },
+        {
+          "path": "/navigation.js",
+          "status": 200,
+          "bytes": 1546
+        },
+        {
+          "path": "/server-builder-ui.js",
+          "status": 200,
+          "bytes": 22297
+        },
+        {
+          "path": "/workspace.css",
+          "status": 200,
+          "bytes": 26227
+        },
+        {
+          "path": "/legal/termos-de-uso",
+          "status": 200,
+          "bytes": 1760
+        }
+      ],
+      "domRegression": "tests/app-navigation.test.js: real modules, aliases, drawer, public/module/delegated routes",
+      "visualLayoutVerified": true,
+      "visualReview": {
+        "date": "2026-11-18",
+        "viewports": [320, 768, 1440],
+        "themes": ["dark", "light"],
+        "routes": 15,
+        "horizontalOverflow": false,
+        "axeViolations": 0,
+        "contrastMin": 5.74,
+        "contrastMax": 10.31,
+        "keyboard": "Drawer, Escape e retorno de foco verificados",
+        "routeAnnouncement": "Região viva anunciou a troca para Construtor de servidores na demo; 0.6.3 cobre também Documentos e acesso negado",
+        "reducedMotion": "Regra prefers-reduced-motion presente na folha de estilos",
+        "screenReader": "Leitor de tela real não executado"
+      }
+    },
+    "securityHardening": [
+      "redactSecrets central em motivos, transcrições e exportações",
+      "Cache-Control no-store para /api e /auth",
+      "Validação de state, code e access_token no callback OAuth2",
+      "Comprimento mínimo de SESSION_ENCRYPTION_KEY",
+      "Pré-checagem de staging somente leitura, com relatório sem valores secretos",
+      "Escopo de rota normalizado para minúsculas, cobrindo também planos já criados",
+      "Revisão de XSS nas prévias dinâmicas do painel sem achados exploráveis"
+    ],
+    "externalIntegrationsExecuted": false,
+    "visualBlockers": [],
+    "preservation": {
+      "preexistingEditsCheckpoint": true,
+      "previousFilesRemoved": 0,
+      "originalPdfUnchanged": true
+    },
+    "productionApproved": false,
+    "previousRelease": {
+      "version": "0.6.3",
+      "date": "2026-11-18",
+      "platform": "win32",
+      "node": "24.15.0",
+      "tests": 186,
+      "failures": 0,
+      "windowsExecuted": true,
+      "liveDiscordExecuted": false,
+      "liveMongoDBExecuted": false,
+      "visualCurrentPackageVerified": true,
+      "build": "passed in source and dist",
+      "migration": "dry-run aditivo de 28 coleções; não aplicada",
+      "dependencyAudit": "0 vulnerabilidades",
+      "manifest": "passed in source and dist"
+    }
+  },
+  "commands": [
+    "npm ci",
+    "npm run doctor",
+    "npm run staging-check",
+    "npm run verify-release",
+    "npm run validate",
+    "npm run traceability",
+    "npm run build",
+    "npm run migrate -- --dry-run",
+    "npm run demo"
+  ],
+  "priorityNext": [
+    "Configurar e testar OAuth2, Discord/Gateway, MongoDB e migração real em staging seguindo docs/staging-checklist.md; começar por npm run staging-check e --online",
+    "Executar cenários do construtor com canal criado/reutilizado e revogação de escopos",
+    "Revisar modelos legais e definir contato/link/responsável",
+    "Aprovar/configurar provedor de IA e avaliar corpus real, se desejado",
+    "Validar reinício/claims/outbox, recuperação/rollback e consentimentos no ambiente real",
+    "Conferir com leitor de tela real e teclado em estação de trabalho dedicada"
+  ],
+  "placeholders": [
+    "[LINK_SERVIDOR_SVR]",
+    "[VERIFICAR]"
+  ],
+  "knownBlockers": [
+    "Sem credenciais/configuração de staging; não enviar segredos ao chat",
+    "Pré-checagem online do staging não executada; a variante offline reportou as variáveis ausentes sem expor valores",
+    "Leitor de tela real não executado; revisão axe/teclado não substitui tecnologia assistiva",
+    "Provedor de IA, contato/link/dados legais ainda não definidos"
+  ],
+  "secretsIncluded": false,
+  "traceabilitySections": 141,
+  "capabilityAdaptations": [
+    "Dois boosts individuais não são fornecidos pela API; usa booster ativo + patamar da guilda",
+    "Verificação por botão/reação confirma participação; captcha externo não simulado",
+    "Boas-vindas/eventos são configurados nas telas próprias; template não ativa automação",
+    "Contratos/cliente tipados; sem conversão integral do legado JavaScript",
+    "Rollback preserva objeto modificado/em uso e recusa operação antiga sem fingerprint",
+    "IA somente revisão humana, sem provedor configurado",
+    "Mensagens do construtor aceitam somente texto/imagens por orientação posterior do usuário; editor completo separado preservado"
+  ]
+}

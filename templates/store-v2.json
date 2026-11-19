@@ -1,0 +1,62 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "store",
+  "name": "Loja e vendas",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "store-root",
+      "name": "comunidade-store",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "catálogo",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "store-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "pedidos",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "store-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "suporte",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "store-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "avisos",
+      "type": 5,
+      "topic": "",
+      "private": false,
+      "parentKey": "store-root"
+    },
+    {
+      "key": "channel-4",
+      "name": "equipe",
+      "type": 0,
+      "topic": "",
+      "private": true,
+      "parentKey": "store-root"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+import {z} from 'zod';
+import {categorySchema,channelSchema,styleSchema,validateStructure,parse} from './schemas.js';
+import {BRAND} from '../public/catalog.js';
+export const MAX_TEMPLATE_BYTES=262144;
+// Campos desconhecidos são removidos. Campos conhecidos inválidos continuam erros.
+export const templateSchema=z.object({format:z.literal('kage-template'),schemaVersion:z.literal(1),id:z.string().regex(/^[a-z][a-z0-9-]{0,39}$/),name:z.string().trim().min(1).max(100),version:z.number().int().min(1).max(999),author:z.string().max(100).optional(),description:z.string().max(500).default(''),style:styleSchema.strip(),categories:z.array(categorySchema.strip()).max(10).default([]),channels:z.array(channelSchema.strip()).max(40)}).strip().superRefine(validateStructure);
+function safeTree(value,depth=0){if(depth>12)throw Object.assign(new Error('Template muito profundo.'),{code:'SCHEMA_INVALID',status:400});if(value&&typeof value==='object')for(const key of Object.keys(value)){if(['__proto__','constructor','prototype'].includes(key))throw Object.assign(new Error('Chave reservada no template.'),{code:'SCHEMA_INVALID',status:400});safeTree(value[key],depth+1);}}
+export function importTemplate(text){if(typeof text!=='string'||Buffer.byteLength(text,'utf8')>MAX_TEMPLATE_BYTES)throw Object.assign(new Error('Template excede 256 KiB.'),{code:'SCHEMA_INVALID',status:400});let raw;try{raw=JSON.parse(text);}catch{throw Object.assign(new Error('JSON inválido.'),{code:'SCHEMA_INVALID',status:400});}safeTree(raw);const template=parse(templateSchema,raw);template.author=BRAND.author;return template;}
+export function exportTemplate(draft,{name='Estrutura Kage',description='Estrutura editável do Kage.'}={}){return parse(templateSchema,{format:'kage-template',schemaVersion:1,id:draft.templateId,name,version:draft.templateVersion,author:BRAND.author,description,style:draft.style,categories:draft.categories||[],channels:draft.channels});}

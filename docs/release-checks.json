@@ -1,0 +1,139 @@
+{
+  "product": "Kage",
+  "version": "0.6.4",
+  "date": "2026-11-18",
+  "platform": "win32",
+  "node": "24.15.0",
+  "baseVersion": "0.6.3",
+  "runtimeSourceCodeChanged": true,
+  "dependencyInstall": "Dependencies reused from 0.6.3; none added or removed",
+  "doctor": "passed",
+  "validation": {
+    "syntax": "passed",
+    "lint": "passed",
+    "typedContracts": "passed",
+    "tests": 186,
+    "failed": 0,
+    "previousTests": 186,
+    "additionalTests": 0,
+    "baselineTests": 159,
+    "cumulativeAddedTests": 27
+  },
+  "build": "passed",
+  "manifest": "passed in source and dist",
+  "migration": {
+    "mode": "dry-run",
+    "collections": 28,
+    "destructive": false,
+    "applied": false,
+    "evidenceDate": "2026-11-11"
+  },
+  "traceability": {
+    "sections": 141,
+    "implementedLocal": 79,
+    "verifiedLocal": 15,
+    "partial": 47
+  },
+  "demo": {
+    "url": "http://127.0.0.1:3040",
+    "httpResources": [
+      {
+        "path": "/",
+        "status": 200,
+        "bytes": 6243
+      },
+      {
+        "path": "/runtime.json",
+        "status": 200,
+        "bytes": 16
+      },
+      {
+        "path": "/app.js",
+        "status": 200,
+        "bytes": 45126
+      },
+      {
+        "path": "/navigation.js",
+        "status": 200,
+        "bytes": 1546
+      },
+      {
+        "path": "/server-builder-ui.js",
+        "status": 200,
+        "bytes": 22297
+      },
+      {
+        "path": "/workspace.css",
+        "status": 200,
+        "bytes": 26227
+      },
+      {
+        "path": "/legal/termos-de-uso",
+        "status": 200,
+        "bytes": 1760
+      }
+    ],
+    "domRegression": "tests/app-navigation.test.js: real modules, aliases, drawer, public/module/delegated routes",
+    "visualLayoutVerified": true,
+    "visualReview": {
+      "date": "2026-11-18",
+      "viewports": [320, 768, 1440],
+      "themes": ["dark", "light"],
+      "routes": 15,
+      "horizontalOverflow": false,
+      "axeViolations": 0,
+      "contrastMin": 5.74,
+      "contrastMax": 10.31,
+      "keyboard": "Drawer, Escape and focus return verified",
+      "routeAnnouncement": "Live region announced the Construtor de servidores route in the demo; 0.6.3 also covers Documentos and denied access",
+      "reducedMotion": "prefers-reduced-motion rule present in the stylesheet",
+      "screenReader": "Real screen reader not executed"
+    }
+  },
+  "securityHardening": [
+    "redactSecrets applied to reasons, transcripts and exports",
+    "Cache-Control no-store for /api and /auth",
+    "OAuth2 state, code and access_token validation",
+    "Minimum SESSION_ENCRYPTION_KEY length",
+    "Read-only staging preflight with secret-free reporting",
+    "Route scope normalized to lowercase, including previously created plans",
+    "XSS review of dynamic dashboard previews found no exploitable sink"
+  ],
+  "externalIntegrationsExecuted": false,
+  "visualBlockers": [],
+  "staging": {
+    "prepared": true,
+    "executed": false,
+    "preflight": "npm run staging-check implementado; execução offline sem .env reportou pendências sem expor segredos",
+    "checklist": "docs/staging-checklist.md"
+  },
+  "preservation": {
+    "preexistingEditsCheckpoint": true,
+    "previousFilesRemoved": 0,
+    "originalPdfUnchanged": true
+  },
+  "productionApproved": false,
+  "sourceValidation": "passed",
+  "allLegacyJavaScriptTypechecked": false,
+  "cleanDistInstall": "not repeated: dependency lock unchanged except product version",
+  "distValidation": "integrity checked; full tests executed in source",
+  "dependencyAudit": {
+    "command": "npm audit --omit=dev",
+    "result": "0 vulnerabilities",
+    "date": "2026-11-18"
+  },
+  "externalChecksExecuted": {
+    "windows": true,
+    "discordOAuthRESTGateway": false,
+    "realMongoDB": false,
+    "layoutAt3207681440": true,
+    "automatedAccessibility": true,
+    "keyboardNavigation": true,
+    "readinessEndpoint": true,
+    "stagingPreflightOffline": true,
+    "stagingPreflightOnline": false,
+    "realScreenReader": false,
+    "realAIProvider": false,
+    "legalReview": false
+  }
+}

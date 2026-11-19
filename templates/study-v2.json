@@ -1,0 +1,62 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "study",
+  "name": "Comunidade de estudos",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "study-root",
+      "name": "comunidade-study",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "avisos",
+      "type": 5,
+      "topic": "",
+      "private": false,
+      "parentKey": "study-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "disciplinas",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "study-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "dúvidas",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "study-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "materiais",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "study-root"
+    },
+    {
+      "key": "channel-4",
+      "name": "salas-de-estudo",
+      "type": 2,
+      "topic": "",
+      "private": false,
+      "parentKey": "study-root"
+    }
+  ]
+}

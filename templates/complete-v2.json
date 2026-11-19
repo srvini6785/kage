@@ -1,0 +1,78 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "complete",
+  "name": "Completo",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "complete-root",
+      "name": "comunidade-complete",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "anúncios",
+      "type": 5,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "fórum",
+      "type": 15,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "eventos",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "tickets",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-4",
+      "name": "mídia",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-5",
+      "name": "staff",
+      "type": 0,
+      "topic": "",
+      "private": true,
+      "parentKey": "complete-root"
+    },
+    {
+      "key": "channel-6",
+      "name": "voz",
+      "type": 2,
+      "topic": "",
+      "private": false,
+      "parentKey": "complete-root"
+    }
+  ]
+}

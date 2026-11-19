@@ -1,0 +1,114 @@
+{
+  "product": "Kage",
+  "version": "0.6.4",
+  "date": "2026-11-18",
+  "platform": "win32",
+  "node": "24.15.0",
+  "baseVersion": "0.6.2",
+  "runtimeSourceCodeChanged": true,
+  "dependencyInstall": "Reused 0.6.2 install; dependencies unchanged",
+  "doctor": "passed",
+  "validation": {
+    "syntax": "passed",
+    "lint": "passed",
+    "typedContracts": "passed",
+    "tests": 186,
+    "failed": 0,
+    "previousTests": 186,
+    "additionalTests": 0,
+    "baselineTests": 159,
+    "cumulativeAddedTests": 27
+  },
+  "build": "passed",
+  "manifest": "passed in source and dist",
+  "migration": {
+    "mode": "dry-run",
+    "collections": 28,
+    "destructive": false,
+    "applied": false,
+    "evidenceDate": "2026-11-11"
+  },
+  "traceability": {
+    "sections": 141,
+    "implementedLocal": 79,
+    "verifiedLocal": 15,
+    "partial": 47
+  },
+  "demo": {
+    "url": "http://127.0.0.1:3040",
+    "httpResources": [
+      {
+        "path": "/",
+        "status": 200,
+        "bytes": 6243
+      },
+      {
+        "path": "/runtime.json",
+        "status": 200,
+        "bytes": 16
+      },
+      {
+        "path": "/app.js",
+        "status": 200,
+        "bytes": 45126
+      },
+      {
+        "path": "/navigation.js",
+        "status": 200,
+        "bytes": 1546
+      },
+      {
+        "path": "/server-builder-ui.js",
+        "status": 200,
+        "bytes": 22297
+      },
+      {
+        "path": "/workspace.css",
+        "status": 200,
+        "bytes": 26227
+      },
+      {
+        "path": "/legal/termos-de-uso",
+        "status": 200,
+        "bytes": 1760
+      }
+    ],
+    "visualLayoutVerified": true,
+    "visualReview": {
+      "date": "2026-11-18",
+      "viewports": [320, 768, 1440],
+      "themes": ["dark", "light"],
+      "routes": 15,
+      "horizontalOverflow": false,
+      "axeViolations": 0,
+      "contrastMin": 5.74,
+      "contrastMax": 10.31,
+      "keyboard": "Drawer, Escape and focus return verified",
+      "routeAnnouncement": "Live region announced the route change in the demo; 0.6.3 covers Documentos and denied access in tests",
+      "reducedMotion": "prefers-reduced-motion rule present in the stylesheet",
+      "screenReader": "Real screen reader not executed"
+    }
+  },
+  "externalIntegrationsExecuted": false,
+  "visualBlockers": [],
+  "staging": {
+    "prepared": true,
+    "executed": false,
+    "preflight": "Offline sem .env; variáveis obrigatórias ausentes reportadas sem valores"
+  },
+  "preservation": {
+    "preexistingEditsCheckpoint": true,
+    "previousFilesRemoved": 0,
+    "originalPdfUnchanged": true
+  },
+  "productionApproved": false,
+  "previousRelease": {
+    "version": "0.6.2",
+    "date": "2026-11-18",
+    "tests": 186,
+    "failed": 0,
+    "baseVersion": "0.6.1",
+    "externalIntegrationsExecuted": false,
+    "visualCurrentPackageVerified": true
+  }
+}

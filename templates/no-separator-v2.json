@@ -1,0 +1,54 @@
+{
+  "format": "kage-template",
+  "schemaVersion": 1,
+  "id": "no-separator",
+  "name": "Sem separador",
+  "version": 2,
+  "author": "Feito por Marcos Vinicius",
+  "description": "Estrutura editável; objetos existentes são preservados.",
+  "style": {
+    "emoji": false,
+    "separator": false
+  },
+  "categories": [
+    {
+      "key": "no-separator-root",
+      "name": "comunidade-no-separator",
+      "private": false
+    }
+  ],
+  "channels": [
+    {
+      "key": "channel-0",
+      "name": "informações",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "no-separator-root"
+    },
+    {
+      "key": "channel-1",
+      "name": "conversa",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "no-separator-root"
+    },
+    {
+      "key": "channel-2",
+      "name": "suporte",
+      "type": 0,
+      "topic": "",
+      "private": false,
+      "parentKey": "no-separator-root"
+    },
+    {
+      "key": "channel-3",
+      "name": "voz",
+      "type": 2,
+      "topic": "",
+      "private": false,
+      "parentKey": "no-separator-root"
+    }
+  ]
+}

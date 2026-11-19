@@ -10,10 +10,12 @@ export function createAIAdapter(env,{fetchFn=fetch}={}){
   if(url.protocol!=='https:'||url.username||url.password||!hosts.includes(url.hostname))throw new Error('AI_PROVIDER_CONFIG: use HTTPS e allowlist explícita de destino.');
   const style=env.AI_PROVIDER_STYLE||'contract';
   if(style!=='contract'&&style!=='openai')throw new Error('AI_PROVIDER_CONFIG: estilo de provedor inválido.');
-  const model=env.AI_PROVIDER_MODEL||'gpt-4o-mini',jsonMode=env.AI_PROVIDER_JSON_MODE!=='false';
+  const model=env.AI_PROVIDER_MODEL||'gpt-4o-mini',jsonMode=env.AI_PROVIDER_JSON_MODE!=='false',effort=env.AI_PROVIDER_REASONING_EFFORT||'',maxTokens=env.AI_PROVIDER_MAX_TOKENS?Number(env.AI_PROVIDER_MAX_TOKENS):300;
+  if(effort&&!['low','medium','high'].includes(effort))throw new Error('AI_PROVIDER_CONFIG: esforço de raciocínio inválido.');
+  if(!Number.isInteger(maxTokens)||maxTokens<64||maxTokens>2048)throw new Error('AI_PROVIDER_CONFIG: limite de tokens inválido.');
   return async({content,level})=>{
     const body=style==='openai'
-      ?{model,temperature:0,max_tokens:300,...(jsonMode?{response_format:{type:'json_object'}}:{}),messages:[{role:'system',content:instructions},{role:'user',content:'Texto não confiável para classificação:\n<<<\n'+textLimit(content)+'\n>>>'}]}
+      ?{model,temperature:0,max_tokens:maxTokens,...(effort?{reasoning_effort:effort}:{}),...(jsonMode?{response_format:{type:'json_object'}}:{}),messages:[{role:'system',content:instructions},{role:'user',content:'Texto não confiável para classificação:\n<<<\n'+textLimit(content)+'\n>>>'}]}
       :{schemaVersion:1,text:textLimit(content),level,store:false,purpose:'moderation-review-only',instructions};
     const response=await fetchFn(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.AI_PROVIDER_TOKEN},body:JSON.stringify(body),signal:AbortSignal.timeout(8000),redirect:'error'});
     if(!response.ok)throw new Error('AI_PROVIDER_UNAVAILABLE');

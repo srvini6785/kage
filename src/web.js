@@ -77,7 +77,13 @@ export function createWeb({ client, env, store, resolveContext = context, receip
       req.session.expiresAt = Date.now() + Math.min(Number.isFinite(tokenTtl) && tokenTtl > 0 ? tokenTtl * 1000 : 3600000, 3600000);
       await persistSession(cb => req.session.save(cb));
       res.redirect('/');
-    } catch (e) { next(e); }
+    } catch (e) {
+      if (e instanceof KageError) {
+        console.error('Kage OAuth:', e.code, req.requestId, redactSecrets(String(e.message||'')).slice(0,160));
+        return res.redirect('/?falha=' + encodeURIComponent(e.code));
+      }
+      next(e);
+    }
   });
   app.get('/api/bootstrap', async (req, res, next) => {
     try { const epoch=sessionValid(req.session)?await epochOf(req.session.user.id):0;if((req.session.userEpoch||0)!==epoch)return res.json({mode:'live',user:null,discordReady:client.isReady()});

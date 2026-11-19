@@ -198,7 +198,7 @@ async function init() {
   try {
     await api.init();
     const publicKey=location.hash.slice(1);if(extension.isPublic(publicKey)){page=publicKey;render();return;}
-    if(api.mode==='live'&&!api.user){page='home';render();return;}
+    if(api.mode==='live'&&!api.user){page='home';render();const falha=new URLSearchParams(location.search).get('falha');if(falha){toast(falha==='KAGE-OAUTH-STATE'?'A sessão de login expirou. Entre novamente.':'Não foi possível concluir o login. Tente novamente.');window.history.replaceState(null,'',location.pathname+location.hash);}return;}
     guilds = await api.guilds();
     if(!guilds.length) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><h1>Vamos encontrar sua comunidade.</h1><p>Nenhum servidor elegível foi encontrado. O Kage precisa estar no servidor e sua conta precisa ter Gerenciar servidor ou uma delegação explícita do proprietário.</p><button class="button" id="logout">Sair</button></div>'; shellLabels(); return; }
     let saved; try { saved = sessionStorage.getItem('kage:guild'); } catch {}

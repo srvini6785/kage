@@ -2,7 +2,7 @@
   "source": "Kage_Bot_Dashboard_Briefing_Mestre_v1.1_85_paginas.pdf",
   "sourceLibraryId": "libfile_705d950822888191bdc73e699e47e480",
   "pages": 85,
-  "release": "0.6.4",
+  "release": "0.6.5",
   "requirements": [
     {
       "id": "PDF-1",

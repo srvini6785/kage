@@ -1,5 +1,12 @@
 # Alterações do Kage
 
+## 0.6.5 — 18/11/2026
+
+- Login do painel deixou de retornar 503: a chave da sessão no MongoDB é derivada de `SESSION_ENCRYPTION_KEY`/`SESSION_SECRET` para um valor que sempre atende à complexidade exigida pelo kruptein. Sessões anteriores são descartadas e o usuário entra novamente.
+- IA de revisão passou a aceitar provedores compatíveis com OpenAI (OpenAI, Groq, OpenRouter e Gemini via endpoint compatível) com `AI_PROVIDER_STYLE=openai`, mantendo HTTPS, allowlist, timeout de 8 segundos, limite de resposta e revisão humana. A IA continua sem aplicar sanções.
+- Registro de comandos globais para bot público com `npm run register:global`. O convite passou a solicitar permissões mínimas curadas, ajustáveis por `INVITE_PERMISSIONS`, sem Administrator.
+- Validação local com 190 testes; lint, contratos e build aprovados.
+
 ## 0.6.4 — 18/11/2026
 
 - Auditoria ofensiva local identificou e corrigiu uma falha de autorização: o roteamento do Express não diferencia maiúsculas, mas o mapa de escopos diferençava; um usuário delegado somente com `view` alcançava `/Security`, `/Settings` e `/Audit-logs` ao capitalizar o caminho.

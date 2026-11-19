@@ -1,4 +1,4 @@
-# Arquitetura Kage 0.6.4
+# Arquitetura Kage 0.6.5
 
 Código original preservado. src/ contém bot, web e serviços existentes; backend/ concentra operações, políticas, RBAC, mídia, agenda e recuperação. bot-shared/ guarda contratos/políticas Zod. public/ é frontend ESM pt-BR. types/ contém contratos TypeScript usados também pelo cliente JSDoc. docs/, legal/, templates/ e migrations/ acompanham a entrega.
 

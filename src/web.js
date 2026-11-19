@@ -11,6 +11,7 @@ import { readFile } from 'node:fs/promises';
 import { dashboardRoutes } from '../backend/routes.js';
 import { idempotencyGuard } from '../backend/idempotency.js';
 import { sessionValid, checkCsrf, seal, unseal, errorEnvelope } from '../backend/guards.js';
+import { sessionCryptoSecret } from '../backend/session-secret.js';
 import { UserPreference } from '../backend/models.js';
 import { z } from 'zod';
 import { parse } from '../bot-shared/schemas.js';
@@ -20,6 +21,7 @@ import { context, updateSettings, setupPayload, makePlan, executePlan, transcrip
 import { canManageBits, KageError, requireThat } from './core/policy.js';
 
 const sameSecret = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+const defaultInvitePermissions = '1099780156598';
 async function discordFetch(path, token) {
   const result = await fetch('https://discord.com/api/v10' + path, { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(10000) });
   requireThat(result.ok, result.status === 429 ? 'KAGE-RATE-LIMIT' : 'KAGE-DISCORD', result.status === 429 ? 'Discord limitou as consultas. Aguarde antes de tentar novamente.' : 'Sessão ou consulta ao Discord indisponível.', result.status === 401 ? 401 : 503);
@@ -33,14 +35,14 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:', 'https://cdn.discordapp.com'], connectSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'self'"], formAction: ["'self'"] } } }));
   const jsonBody=express.json({limit:'128kb'}),templateBody=express.json({limit:'1mb'}),assetBody=express.json({limit:'4mb'}),backupBody=express.json({limit:'2mb'});
   app.use((req,res,next)=>(/^\/api\/guilds\/\d{17,20}\/templates\/import$/.test(req.path)?templateBody:/^\/api\/guilds\/\d{17,20}\/backup\/import$/.test(req.path)?backupBody:/^\/api\/guilds\/\d{17,20}\/assets$/.test(req.path)?assetBody:jsonBody)(req,res,next));
-  app.use(session({ name: 'kage.sid', secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, crypto: { secret: env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET } }), cookie: { httpOnly: true, sameSite: env.EMBEDDED_PREVIEW === 'true' ? 'none' : 'lax', secure: env.NODE_ENV === 'production' || env.EMBEDDED_PREVIEW === 'true', maxAge: 3600000 } }));
+  app.use(session({ name: 'kage.sid', secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, crypto: { secret: sessionCryptoSecret(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET) } }), cookie: { httpOnly: true, sameSite: env.EMBEDDED_PREVIEW === 'true' ? 'none' : 'lax', secure: env.NODE_ENV === 'production' || env.EMBEDDED_PREVIEW === 'true', maxAge: 3600000 } }));
   app.use('/api', rateLimit({ windowMs: 60000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false }));
   app.use('/auth', rateLimit({ windowMs: 60000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false }));
-  app.get('/health',(req,res)=>res.json({status:'alive',product:'Kage',version:'0.6.4'}));
-  app.get('/ready',(req,res)=>{const database=databaseReady(),bot=client.isReady();res.status(database&&bot?200:503).json({state:database&&bot?'ready':'degraded',product:'Kage',version:'0.6.4',checks:{database,bot}});});
+  app.get('/health',(req,res)=>res.json({status:'alive',product:'Kage',version:'0.6.5'}));
+  app.get('/ready',(req,res)=>{const database=databaseReady(),bot=client.isReady();res.status(database&&bot?200:503).json({state:database&&bot?'ready':'degraded',product:'Kage',version:'0.6.5',checks:{database,bot}});});
   const legalNames=['termos-de-uso','politica-de-privacidade','politica-de-cookies','acessibilidade','seguranca'];
   app.get('/legal/:slug',async(req,res,next)=>{try{if(!legalNames.includes(req.params.slug))return res.sendStatus(404);res.type('text/plain').send(await readFile(fileURLToPath(new URL('../legal/'+req.params.slug+'.md',import.meta.url)),'utf8'));}catch(e){next(e);}});
-  app.get('/invite',(req,res)=>{if(!/^\d{17,20}$/.test(env.DISCORD_CLIENT_ID||''))return res.status(409).json({code:'GUILD_NOT_READY',message:'Convite não configurado.'});const url=new URL('https://discord.com/oauth2/authorize');url.search=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,scope:'bot applications.commands',permissions:'0'});res.redirect(url.toString());});
+  app.get('/invite',(req,res)=>{if(!/^\d{17,20}$/.test(env.DISCORD_CLIENT_ID||''))return res.status(409).json({code:'GUILD_NOT_READY',message:'Convite não configurado.'});const permissions=/^\d{1,20}$/.test(env.INVITE_PERMISSIONS||'')?env.INVITE_PERMISSIONS:defaultInvitePermissions,url=new URL('https://discord.com/oauth2/authorize');url.search=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,scope:'bot applications.commands',permissions});res.redirect(url.toString());});
   app.get('/auth/login', (req, res) => {
     req.session.oauthState = randomBytes(32).toString('hex'); req.session.oauthAt = Date.now();
     const url = new URL('https://discord.com/oauth2/authorize');

@@ -1,8 +1,8 @@
 {
   "product": "Kage",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "updatedAt": "2026-11-18",
-  "previousRelease": "Kage_v0.6.3.zip",
+  "previousRelease": "Kage_v0.6.4.zip",
   "resumeInstructions": "RETOMAR_WINDOWS.md",
   "agentInstructions": "AGENTS.md",
   "specification": {
@@ -31,28 +31,31 @@
     "Lista de permissões do bot na pré-checagem centralizada em constante única, sem mudar o resultado",
     "Auditoria ofensiva local corrigiu contorno de escopo por variação de caixa em rotas do painel",
     "Revisão de XSS nas prévias do construtor e da estrutura sem sink explorável; schema estrito confirmado",
-    "141 seções mantidas, documentação atualizada e testes de regressão incorporados à suíte"
+    "141 seções mantidas, documentação atualizada e testes de regressão incorporados à suíte",
+    "Login do painel corrigido: chave do session store derivada para atender à complexidade do kruptein, eliminando o 503 em produção",
+    "IA de revisão compatível com provedores OpenAI (OpenAI, Groq, OpenRouter e Gemini) por AI_PROVIDER_STYLE=openai, sem sanção automática",
+    "Comandos globais para bot público com npm run register:global e convite com permissões mínimas curadas, sem Administrator"
   ],
   "validation": {
     "product": "Kage",
-    "version": "0.6.4",
+    "version": "0.6.5",
     "date": "2026-11-18",
     "platform": "win32",
     "node": "24.15.0",
-    "baseVersion": "0.6.3",
+    "baseVersion": "0.6.4",
     "runtimeSourceCodeChanged": true,
-    "dependencyInstall": "Dependências da 0.6.2 reutilizadas; nenhuma adicionada ou removida",
+    "dependencyInstall": "Dependências da 0.6.4 reutilizadas; nenhuma adicionada ou removida",
     "doctor": "passed",
     "validation": {
       "syntax": "passed",
       "lint": "passed",
       "typedContracts": "passed",
-      "tests": 186,
+      "tests": 190,
       "failed": 0,
       "previousTests": 186,
-      "additionalTests": 0,
+      "additionalTests": 4,
       "baselineTests": 159,
-      "cumulativeAddedTests": 27
+      "cumulativeAddedTests": 31
     },
     "build": "passed",
     "manifest": "passed in source and dist",
@@ -132,7 +135,10 @@
       "Comprimento mínimo de SESSION_ENCRYPTION_KEY",
       "Pré-checagem de staging somente leitura, com relatório sem valores secretos",
       "Escopo de rota normalizado para minúsculas, cobrindo também planos já criados",
-      "Revisão de XSS nas prévias dinâmicas do painel sem achados exploráveis"
+      "Revisão de XSS nas prévias dinâmicas do painel sem achados exploráveis",
+      "Chave do session store derivada para atender ao kruptein, eliminando o 503 de login",
+      "Provedor de IA compatível com OpenAI mantém HTTPS, allowlist, timeout e schema estrito",
+      "Registro global de comandos e convite com permissões mínimas sem Administrator"
     ],
     "externalIntegrationsExecuted": false,
     "visualBlockers": [],
@@ -143,7 +149,7 @@
     },
     "productionApproved": false,
     "previousRelease": {
-      "version": "0.6.3",
+      "version": "0.6.4",
       "date": "2026-11-18",
       "platform": "win32",
       "node": "24.15.0",
@@ -168,13 +174,17 @@
     "npm run traceability",
     "npm run build",
     "npm run migrate -- --dry-run",
-    "npm run demo"
+    "npm run demo",
+    "npm run register",
+    "npm run register:global"
   ],
   "priorityNext": [
-    "Configurar e testar OAuth2, Discord/Gateway, MongoDB e migração real em staging seguindo docs/staging-checklist.md; começar por npm run staging-check e --online",
+    "Registrar o callback OAuth2 no portal, entrar em produção e repetir npm run staging-check --online após o deploy",
+    "Aplicar a migração aditiva no Atlas e validar o painel com dados reais",
+    "Configurar o provedor de IA, ativar Message Content e revisar o filtro em Observação por servidor",
+    "Rodar npm run register:global e marcar Public Bot, Termos e Privacidade no portal do Discord",
     "Executar cenários do construtor com canal criado/reutilizado e revogação de escopos",
     "Revisar modelos legais e definir contato/link/responsável",
-    "Aprovar/configurar provedor de IA e avaliar corpus real, se desejado",
     "Validar reinício/claims/outbox, recuperação/rollback e consentimentos no ambiente real",
     "Conferir com leitor de tela real e teclado em estação de trabalho dedicada"
   ],
@@ -183,10 +193,10 @@
     "[VERIFICAR]"
   ],
   "knownBlockers": [
-    "Sem credenciais/configuração de staging; não enviar segredos ao chat",
-    "Pré-checagem online do staging não executada; a variante offline reportou as variáveis ausentes sem expor valores",
+    "OAuth2 real, migração aplicada e pré-checagem online completa ainda não executados; não enviar segredos ao chat",
+    "Provedor de IA e Message Content ainda não configurados; o filtro permanece desativado até aprovação por servidor",
     "Leitor de tela real não executado; revisão axe/teclado não substitui tecnologia assistiva",
-    "Provedor de IA, contato/link/dados legais ainda não definidos"
+    "Contato, link de suporte e dados legais ainda não definidos para o bot público"
   ],
   "secretsIncluded": false,
   "traceabilitySections": 141,
@@ -196,7 +206,7 @@
     "Boas-vindas/eventos são configurados nas telas próprias; template não ativa automação",
     "Contratos/cliente tipados; sem conversão integral do legado JavaScript",
     "Rollback preserva objeto modificado/em uso e recusa operação antiga sem fingerprint",
-    "IA somente revisão humana, sem provedor configurado",
+    "IA somente revisão humana; aceita provedor compatível com OpenAI quando configurado, sem sanção automática",
     "Mensagens do construtor aceitam somente texto/imagens por orientação posterior do usuário; editor completo separado preservado"
   ]
 }

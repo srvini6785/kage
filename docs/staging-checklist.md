@@ -96,3 +96,11 @@ A reconciliação assistida pelo proprietário já existe na tela Backups e não
 - Corrigida falha de autorização em que variações de caixa do caminho contornavam o escopo delegado. Em staging, teste um usuário somente com `view` contra `/Security`, `/Settings` e `/Audit-logs` em maiúsculas e minúsculas: todas devem responder 403.
 - Repita a criação e a confirmação de uma operação para garantir que planos antigos também seguem bloqueados após a atualização.
 - Nenhuma migração nova; a pré-checagem e a suíte local permanecem como critério antes do aceite.
+
+## Fechamento 0.6.5
+
+- O login deixou de depender da complexidade do segredo: a chave do session store é derivada. Após o deploy, `/auth/login` deve responder 302 e o cookie `kage.sid` deve sair `Secure` com `NODE_ENV=production`.
+- Registre `https://<origem>/auth/callback` no portal do Discord antes de entrar; divergência de callback continua bloqueando o OAuth2.
+- Para IA, configure `AI_PROVIDER_STYLE=openai`, `AI_PROVIDER_MODEL`, URL, allowlist e token no ambiente; ative Message Content Intent e `ENABLE_MESSAGE_CONTENT=true`; por servidor, selecione "Somente revisão humana" e marque o provedor aprovado. Confirme que o resultado é revisão, nunca sanção.
+- Para bot público, rode `npm run register:global`, marque Public Bot no portal, preencha Termos/Privacidade e acompanhe o limite de 100 servidores para verificação.
+- Mantenha um monitor HTTP em `/health` a cada 5 minutos para evitar a hibernação do plano gratuito.

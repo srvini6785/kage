@@ -1,4 +1,4 @@
-# AutoMod nativo · Kage 0.6.4
+# AutoMod nativo · Kage 0.6.5
 
 Referência: https://docs.discord.com/developers/resources/auto-moderation, conferida em 11/11/2026, e implementação do discord.js 14.28.1 instalado. Contrato em bot-shared/native-automod.js; política/efeito em backend/native-automod.js; interface na tela Segurança. Não substitui o AutoMod Kage existente.
 

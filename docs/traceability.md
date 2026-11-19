@@ -1,4 +1,4 @@
-# Rastreabilidade Kage 0.6.4
+# Rastreabilidade Kage 0.6.5
 
 Fonte principal: Kage_Bot_Dashboard_Briefing_Mestre_v1.1_85_paginas.pdf · 85 páginas físicas · 141 seções.
 

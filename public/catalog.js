@@ -1,4 +1,4 @@
-export const BRAND={name:'Kage',version:'0.6.4',author:'Feito por Marcos Vinicius',support:'Apoio e direcionamento: SVR Company',supportUrl:'[LINK_SERVIDOR_SVR]'};
+export const BRAND={name:'Kage',version:'0.6.5',author:'Feito por Marcos Vinicius',support:'Apoio e direcionamento: SVR Company',supportUrl:'[LINK_SERVIDOR_SVR]'};
 const template=(id,name,names,options={})=>({id,name,version:2,author:'Marcos Vinicius',description:'Estrutura editável; objetos existentes são preservados.',permissions:['ManageChannels'],categories:[{key:id+'-root',name:'comunidade-'+id,private:false}],channels:names.split('|').map((name,i)=>({key:'channel-'+i,name,type:['voz','salas-de-estudo'].includes(name)?2:name==='fórum'?15:['anúncios','avisos'].includes(name)?5:0,topic:'',private:['equipe','staff','logs'].includes(name),parentKey:id+'-root'})),...options});
 export const templates=[
  template('emoji','Com emoji','informações|conversa|mídia|voz|eventos',{emoji:true}),

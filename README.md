@@ -1,6 +1,6 @@
-# Kage 0.6.4
+# Kage 0.6.5
 
-Continuação do código 0.6.3, preservando bot, painel, módulos, comandos e o briefing mestre v1.1 de 85 páginas. Feito por Marcos Vinicius. Apoio e direcionamento: SVR Company.
+Continuação do código 0.6.4, preservando bot, painel, módulos, comandos e o briefing mestre v1.1 de 85 páginas. Esta versão corrige o login do painel, aceita provedores de IA compatíveis com OpenAI e permite registrar comandos globais para uso público. Feito por Marcos Vinicius. Apoio e direcionamento: SVR Company.
 
 ## Demonstração
 

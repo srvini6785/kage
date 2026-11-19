@@ -1,23 +1,23 @@
 {
   "product": "Kage",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "date": "2026-11-18",
   "platform": "win32",
   "node": "24.15.0",
-  "baseVersion": "0.6.3",
+  "baseVersion": "0.6.4",
   "runtimeSourceCodeChanged": true,
-  "dependencyInstall": "Dependencies reused from 0.6.3; none added or removed",
+  "dependencyInstall": "Dependencies reused from 0.6.4; none added or removed",
   "doctor": "passed",
   "validation": {
     "syntax": "passed",
     "lint": "passed",
     "typedContracts": "passed",
-    "tests": 186,
+    "tests": 190,
     "failed": 0,
     "previousTests": 186,
-    "additionalTests": 0,
+    "additionalTests": 4,
     "baselineTests": 159,
-    "cumulativeAddedTests": 27
+    "cumulativeAddedTests": 31
   },
   "build": "passed",
   "manifest": "passed in source and dist",
@@ -97,7 +97,10 @@
     "Minimum SESSION_ENCRYPTION_KEY length",
     "Read-only staging preflight with secret-free reporting",
     "Route scope normalized to lowercase, including previously created plans",
-    "XSS review of dynamic dashboard previews found no exploitable sink"
+    "XSS review of dynamic dashboard previews found no exploitable sink",
+    "Session store key derived to always satisfy kruptein complexity, removing the login 503",
+    "OpenAI-compatible AI provider keeps HTTPS, allowlist, timeout, response cap and strict schema",
+    "Global command registration and curated invite permissions without Administrator"
   ],
   "externalIntegrationsExecuted": false,
   "visualBlockers": [],

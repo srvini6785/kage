@@ -1,4 +1,4 @@
-# Construtor de servidores · Kage 0.6.4
+# Construtor de servidores · Kage 0.6.5
 
 Continuação da base 0.5.0 e das edições locais de interface. Atende aos passos das seções 5/6 do PDF e à orientação posterior de concentrar assistente e cargos em Construtor de servidores. Segurança e Editor de embeds permanecem ferramentas completas separadas.
 

@@ -1,4 +1,4 @@
-# Implementação 0.6.4
+# Implementação 0.6.5
 
 A base JavaScript/Express/Mongoose/discord.js foi ampliada; não foi substituída por um projeto novo. Catálogos e dados de demonstração não são evidência de efeitos Discord. Os novos controles começam desativados.
 

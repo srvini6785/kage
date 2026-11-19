@@ -1,6 +1,6 @@
 # Decisões atuais e continuidade
 
-18/11/2026 · Kage 0.6.4. Histórico distribuído: 0.1.0→0.2.0→0.3.0→0.4.0→0.5.0→0.6.0→0.6.1→0.6.2→0.6.3→0.6.4. Os pacotes anteriores foram preservados; esta pasta contém a continuação atual.
+18/11/2026 · Kage 0.6.5. Histórico distribuído: 0.1.0→0.2.0→0.3.0→0.4.0→0.5.0→0.6.0→0.6.1→0.6.2→0.6.3→0.6.4→0.6.5. Os pacotes anteriores foram preservados; esta pasta contém a continuação atual.
 
 - Nome comercial único Kage por instrução expressa, mesmo onde o PDF cita variantes. Créditos, laranja, textos em pt-BR e placeholders preservados. O PDF original não foi alterado.
 - A tentativa anterior no Windows teve helper_sandbox_lock_failed. O checkpoint anterior continuou no Linux. Na retomada atual, a cópia 0.5.0 foi recuperada e ampliada para 0.6.0 no Windows, preservando a pasta anterior. O ZIP e os scripts portáteis permitem retomada sem reconstruir o projeto.
@@ -46,3 +46,11 @@ A preparação de staging ganhou uma pré-checagem local somente leitura que val
 ## Fechamento 0.6.3 em 18/11/2026
 
 O anúncio de rota passou a ser uma função única, deduplicada pela rota e não pelo texto, evitando repetição ao atualizar a mesma tela e cobrindo telas públicas e acessos negados. Os testes verificam anúncio em Documentos, acesso negado, silêncio após atualização e novo anúncio ao trocar de rota negada. A lista de permissões do bot na pré-checagem virou constante única. Nenhum fluxo de negócio mudou e a suíte permanece com 186 testes.
+
+## Publicação 0.6.5 em 18/11/2026
+
+- O login retornava 503 em produção porque o connect-mongo usa kruptein, que exige ao menos duas maiúsculas, duas minúsculas, dois dígitos e dois caracteres especiais no segredo. Segredos base64url falham nessa regra com frequência. A chave do session store passou a ser derivada por SHA-256 em base64url com sufixo fixo, garantindo a complexidade sem reduzir a entropia da configuração.
+- Sessões criadas com a chave anterior deixam de ser legíveis; o usuário entra novamente após o deploy. A mudança vale para qualquer instalação, sem exigir regeração manual do segredo.
+- A IA de moderação ganhou `AI_PROVIDER_STYLE=openai` para OpenAI, Groq, OpenRouter e Gemini por endpoint compatível, com resposta JSON validada e normalizada. O modo `contract` permanece como padrão e a IA continua somente de revisão, sem sanção automática.
+- Para o bot público, `npm run register:global` registra comandos globais e o convite passou a pedir permissões mínimas curadas (sem Administrator), ajustáveis por `INVITE_PERMISSIONS`.
+- Validação local: 190 testes, lint, contratos, build e manifesto. Staging real, leitor de tela e revisão legal continuam pendentes.

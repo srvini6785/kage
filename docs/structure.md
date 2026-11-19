@@ -1,4 +1,4 @@
-# Assistente e templates · Kage 0.6.4
+# Assistente e templates · Kage 0.6.5
 
 Implementa a continuação das seções 5.1/5.4, fichas dos treze templates e contrato templates/apply do briefing mestre. A superfície permanece beta: integração real e revisão visual desta versão não foram executadas.
 

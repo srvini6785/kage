@@ -1,4 +1,4 @@
-# Entrega Kage 0.6.4
+# Entrega Kage 0.6.5
 
 18/11/2026 · Windows · continuação 0.6.2 com preservação das edições locais. O PDF de 85 páginas permanece a especificação principal; a reorganização segue a orientação posterior do usuário.
 

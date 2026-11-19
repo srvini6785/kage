@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHmac} from 'node:crypto';
+import session from 'express-session';
+import {createWeb} from '../src/web.js';
+
+test('Sessão antiga indecifrável é descartada sem derrubar a página',async t=>{
+  const secret='fixture-secret-with-more-than-32-characters',sid='antigo',mac=createHmac('sha256',secret).update(sid).digest('base64').replace(/=+$/,''),cookie='kage.sid='+encodeURIComponent('s:'+sid+'.'+mac);
+  const store=new session.MemoryStore();
+  store.get=(id,cb)=>setImmediate(()=>id?cb(new Error('Unsupported state or unable to authenticate data')):cb(null,null));
+  const app=createWeb({client:{isReady:()=>true},env:{SESSION_SECRET:secret,PUBLIC_ORIGIN:'https://kage.test',NODE_ENV:'test'},store,sessionEpochs:{findOne:()=>({lean:async()=>null})},receipts:{},resolveContext:async()=>{}});
+  const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));
+  const base='http://127.0.0.1:'+server.address().port;
+  const stale=await fetch(base+'/',{headers:{Cookie:cookie},redirect:'manual'});
+  assert.equal(stale.status,303);
+  assert.equal(stale.headers.get('location'),'/');
+  assert.match(stale.headers.get('set-cookie')||'',/kage\.sid=;/);
+  const fresh=await fetch(base+'/');
+  assert.equal(fresh.status,200);
+  assert.match(await fresh.text(),/Kage/);
+  const api=await fetch(base+'/api/bootstrap',{headers:{Cookie:cookie}});
+  assert.equal(api.status,401);
+  const body=await api.json();
+  assert.equal(body.code,'AUTH_REQUIRED');
+  const login=await fetch(base+'/auth/login',{headers:{Cookie:cookie},redirect:'manual'});
+  assert.equal(login.status,303);
+  assert.equal(login.headers.get('location'),'/auth/login');
+  const retry=await fetch(base+'/auth/login',{redirect:'manual'});
+  assert.equal(retry.status,302);
+});

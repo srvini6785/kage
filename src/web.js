@@ -161,11 +161,18 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use('/api',(req,res)=>res.status(404).json(errorEnvelope(new KageError('KAGE-NOT-FOUND','Rota indisponível.',404),req.requestId)));
   app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url)), { maxAge: 0 }));
   app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
     const bodyError=['entity.too.large','entity.parse.failed'].includes(err.type);
+    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))){
+      console.error('Kage sessão:', 'STALE_SESSION', req.requestId);
+      res.clearCookie('kage.sid',{path:'/',secure:env.NODE_ENV==='production'});
+      if(['GET','HEAD'].includes(req.method)&&!/^\/api(\/|$)/.test(req.path))return res.redirect(303, req.originalUrl.split('?')[0] || '/');
+      return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão inválida. Entre novamente.'},req.requestId));
+    }
     if(!bodyError&&!(err instanceof KageError)&&/discord/i.test(err?.name||''))err=new KageError('KAGE-DISCORD','O Discord não respondeu como esperado. Tente novamente.',503);
     const known=bodyError||err instanceof KageError || Number.isInteger(err.status)&&typeof err.code==='string';
     console.error('Kage HTTP:', bodyError?'SCHEMA_INVALID':known ? err.code : 'KAGE-DEPENDENCY', req.requestId, err.name||'Error', redactSecrets(String(err.message||'')).slice(0,160));
-    if (res.headersSent) return next(err);
+    if(!known&&['GET','HEAD'].includes(req.method)&&!/^\/(api|auth)(\/|$)/.test(req.path)&&String(req.get('accept')||'').includes('text/html'))return res.status(503).type('html').send('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="6"><title>Kage · reconectando</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#151112;color:#f4ece6;font-family:system-ui,sans-serif}main{max-width:420px;padding:32px;text-align:center}h1{color:#f26a21;font-size:1.35rem}p{line-height:1.6}</style><main><h1>O Kage está reconectando.</h1><p>O banco de dados não respondeu agora. Esta página tenta novamente em alguns segundos.</p></main></html>');
     res.status(known?err.status:503).json(errorEnvelope(err,req.requestId));
   });
   return app;

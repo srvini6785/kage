@@ -21,7 +21,7 @@ export const api = {
     catch { this.mode = 'unavailable'; throw new Error('Não foi possível verificar a conexão. Atualize para tentar novamente.'); }
     if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) { this.mode = 'unavailable'; throw new Error('O serviço não confirmou seu estado. Tente atualizar a página.'); }
     const data = await res.json();
-    this.mode = data.mode; this.user = data.user; this.csrf = data.csrf;
+    this.mode = data.mode; this.user = data.user; this.csrf = data.csrf; this.discordReady = data.discordReady;
     this.messageContent = data.messageContent;
     if(this.user){const me=await this.request('me');this.preferences=me.preferences||{};if(this.preferences.theme)document.documentElement.dataset.theme=this.preferences.theme;}
   },

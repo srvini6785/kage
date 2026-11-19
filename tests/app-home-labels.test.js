@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {parseHTML} from 'linkedom';
+import {api} from '../public/api.js';
+import {extension} from '../public/extended.js';
+const tick=async()=>{for(let n=0;n<6;n++)await new Promise(setImmediate);};
+const storage=()=>{const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,String(v)),removeItem:k=>map.delete(k)};};
+test('Tela de login em produção não exibe rótulos de demonstração',async t=>{
+ const {document,window}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
+ const timers=new Set(),originalTimeout=globalThis.setTimeout;globalThis.setTimeout=(fn,ms,...args)=>{const id=originalTimeout(fn,ms,...args);timers.add(id);return id;};
+ const globals=['document','window','location','localStorage','sessionStorage'],before=Object.fromEntries(globals.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+ Object.assign(globalThis,{document,window,location:new URL('https://kage.example/'),localStorage:storage(),sessionStorage:storage()});window.scrollTo=()=>{};
+ const methods={init:api.init,guilds:api.guilds,state:api.state,logout:api.logout};
+ api.init=async()=>{api.mode='live';api.user=null;api.csrf=undefined;api.discordReady=true;};api.guilds=async()=>{throw new Error('não deveria consultar servidores sem sessão');};
+ t.after(()=>{extension.reset();for(const id of timers)clearTimeout(id);globalThis.setTimeout=originalTimeout;Object.assign(api,methods);for(const k of globals){if(before[k])Object.defineProperty(globalThis,k,before[k]);else delete globalThis[k];}});
+ await import('../public/app.js');await tick();
+ const main=document.querySelector('#main').textContent;
+ assert.match(main,/Entrar com Discord/);
+ assert.doesNotMatch(main,/Demonstração/);
+ assert.doesNotMatch(document.querySelector('#mode-pill').textContent,/Demonstração/);
+ assert.doesNotMatch(document.querySelector('#connection-label').textContent,/demonstração/i);
+ assert.equal(document.querySelector('#connection-label').textContent,'Conectado ao Discord');
+ assert.equal(document.querySelector('#account-name').textContent,'Kage');
+ assert.equal(document.querySelector('#account-role').textContent,'Não conectado');
+});

@@ -87,23 +87,27 @@ function navigation() {
   $('#navigation').innerHTML = navItems.filter(([key])=>key==='_'||pageAllowed(data.scopes,key)).map(([key,label,ico]) => key === '_' ? '<div class="nav-label">' + label + '</div>' : '<a href="#' + key + '" class="nav-item' + (key === page ? ' active' : '') + '"' + (key === page ? ' aria-current="page"' : '') + '>' + icon(ico) + '<span>' + label + '</span>' + (key === 'tickets' ? '<span class="nav-number">' + data.tickets.filter(t => t.state === 'open').length + '</span>' : key === 'setup' ? '<span class="new-badge">BETA</span>' : '') + '</a>').join('');
 }
 function closeNavigation(restoreFocus=false){$('#sidebar').classList.remove('open');$('#menu-toggle').setAttribute('aria-expanded','false');if(restoreFocus)$('#menu-toggle').focus?.();}
+function shellLabels(){
+  const demo=api.mode==='demo',ready=api.discordReady??data?.discordReady,account=api.user?.username||(demo?'Marcos Vinicius':'Kage');
+  $('#connection-label').textContent=demo?'Ambiente de demonstração':ready?'Conectado ao Discord':'Conexão indisponível';
+  $('#mode-pill').innerHTML='<span class="dot '+(demo?'orange':ready?'green':'orange')+'"></span>'+(demo?'Demonstração':ready?'Discord conectado':'Discord indisponível');
+  $('#account-name').textContent=account;
+  $('#account-role').textContent=demo?'Conta de demonstração':api.user?'Conta conectada':'Não conectado';
+  const initial=account.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  document.querySelectorAll('.avatar').forEach(a=>a.textContent=initial);
+}
 function render() {
   closeNavigation();
   if(data?.scopes&&!pageAllowed(data.scopes,page)){announceRoute('Acesso indisponível',page);$('#main').innerHTML='<section class="panel"><div class="form-body"><h1>Acesso indisponível</h1><p>O proprietário pode revisar seus acessos nesta seção.</p><a href="#overview">Voltar</a></div></section>';return;}
   const extra=extension.render(page,{api,id:currentId,data,redraw:render,toast,download});
-  if(extension.isPublic(page)){document.title='Kage · Informações';$('#main').innerHTML=extra;$('#breadcrumb-page').textContent='Kage';if(data)navigation();announceRoute('Informações',page);return;}
+  if(extension.isPublic(page)){document.title='Kage · Informações';$('#main').innerHTML=extra;$('#breadcrumb-page').textContent='Kage';shellLabels();if(data)navigation();announceRoute('Informações',page);return;}
   const pages = { overview, tickets: ticketsPage, embeds: embedsPage, setup: setupPage, settings: settingsPage, logs: logsPage, help: helpPage };
   $('#main').innerHTML=extra!==null?extra:pages[page]?pages[page]():modulePage(page);
   const label = navItems.find(x => x[0] === page)?.[1] || 'Conheça o Kage';
   $('#breadcrumb-page').textContent = label;
   $('#sidebar-guild').textContent = data.guild.name;
   $('#sidebar').classList.remove('open');
-  $('#connection-label').textContent = api.mode === 'demo' ? 'Ambiente de demonstração' : data.discordReady ? 'Conectado ao Discord' : 'Conexão indisponível';
-  $('#mode-pill').innerHTML = '<span class="dot ' + (api.mode === 'demo' ? 'orange' : data.discordReady?'green':'orange') + '"></span>' + (api.mode === 'demo' ? 'Demonstração' : data.discordReady?'Discord conectado':'Discord indisponível');
-  $('#account-name').textContent = api.user?.username || 'Conta Discord';
-  $('#account-role').textContent = api.mode === 'demo' ? 'Conta de demonstração' : 'Conta conectada';
-  const initial = (api.user?.username || 'MV').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
-  document.querySelectorAll('.avatar').forEach(a => a.textContent = initial);
+  shellLabels();
   navigation();
   document.title = 'Kage · ' + $('#breadcrumb-page').textContent;
   announceRoute(label,page);
@@ -195,14 +199,13 @@ async function init() {
     await api.init();
     const publicKey=location.hash.slice(1);if(extension.isPublic(publicKey)){page=publicKey;render();return;}
     if(api.mode==='live'&&!api.user){page='home';render();return;}
-    if(api.mode === 'live' && !api.user) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><div class="eyebrow">BEM-VINDO AO KAGE</div><h1>Uma comunidade.<br>Infinitas possibilidades.</h1><p>Entre com sua conta Discord para encontrar seus servidores e configurar o Kage.</p><a class="button primary" href="./auth/login">Entrar com Discord ' + icon('arrow') + '</a></div>'; $('#mode-pill').textContent = 'Login necessário'; $('#sidebar-guild').textContent = 'Selecione um servidor'; return; }
     guilds = await api.guilds();
-    if(!guilds.length) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><h1>Vamos encontrar sua comunidade.</h1><p>Nenhum servidor elegível foi encontrado. O Kage precisa estar no servidor e sua conta precisa ter Gerenciar servidor ou uma delegação explícita do proprietário.</p><button class="button" id="logout">Sair</button></div>'; return; }
+    if(!guilds.length) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><h1>Vamos encontrar sua comunidade.</h1><p>Nenhum servidor elegível foi encontrado. O Kage precisa estar no servidor e sua conta precisa ter Gerenciar servidor ou uma delegação explícita do proprietário.</p><button class="button" id="logout">Sair</button></div>'; shellLabels(); return; }
     let saved; try { saved = sessionStorage.getItem('kage:guild'); } catch {}
     currentId = guilds.some(g=>g.id === saved) ? saved : guilds[0].id;
     const key = location.hash.slice(1); if(key==='roles')extension.openBuilder(2);page = [...navItems.map(x=>x[0]),...legacyPages,'automod','antinuke','help',...extension.pages].includes(key) && key !== '_' ? canonicalPage(key) : 'overview';
     data = await api.state(currentId); render();
-  } catch(e) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><h1>Conexão indisponível.</h1><p>' + esc(e.message) + '</p><button class="button primary" id="retry-connect">Tentar novamente</button></div>'; $('#connection-label').textContent = 'Estado não confirmado'; }
+  } catch(e) { $('#main').innerHTML = '<div class="login"><img src="./mark.svg" alt=""><h1>Conexão indisponível.</h1><p>' + esc(e.message) + '</p><button class="button primary" id="retry-connect">Tentar novamente</button></div>'; shellLabels(); $('#connection-label').textContent = 'Estado não confirmado'; }
 }
 document.addEventListener('click', e=>{ if(e.target.closest('#retry-connect')) init(); });
 extension.bind();

@@ -18,17 +18,21 @@ import { parse } from '../bot-shared/schemas.js';
 import { fileURLToPath } from 'node:url';
 import { Config, Audit, Ticket, Profile, Operation, databaseReady } from './db.js';
 import { context, updateSettings, setupPayload, makePlan, executePlan, transcript, ticketAllowed, levelForXp } from './services.js';
-import { canManageBits, KageError, requireThat } from './core/policy.js';
+import { canManageBits, KageError, requireThat, redactSecrets } from './core/policy.js';
 
 const sameSecret = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const defaultInvitePermissions = '1099780156598';
 async function discordFetch(path, token) {
-  const result = await fetch('https://discord.com/api/v10' + path, { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(10000) });
+  let result;
+  try { result = await fetch('https://discord.com/api/v10' + path, { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(10000) }); }
+  catch { throw new KageError('KAGE-DISCORD', 'O Discord não respondeu. Tente novamente em instantes.', 503); }
   requireThat(result.ok, result.status === 429 ? 'KAGE-RATE-LIMIT' : 'KAGE-DISCORD', result.status === 429 ? 'Discord limitou as consultas. Aguarde antes de tentar novamente.' : 'Sessão ou consulta ao Discord indisponível.', result.status === 401 ? 401 : 503);
-  return result.json();
+  try { return await result.json(); } catch { throw new KageError('KAGE-DISCORD', 'Resposta inesperada do Discord. Tente novamente.', 503); }
 }
 export function createWeb({ client, env, store, resolveContext = context, receipts, sessionEpochs=SessionEpoch }) {
   const app = express();
+  const epochOf = async userId => { try { return (await sessionEpochs.findOne({userId}).lean())?.epoch||0; } catch { throw new KageError('KAGE-DATABASE','Banco de dados indisponível. Tente novamente em instantes.',503); } };
+  const persistSession = fn => new Promise((resolve, reject) => fn(e => e ? reject(new KageError('KAGE-DATABASE','Sessão indisponível no momento. Tente novamente.',503)) : resolve()));
   app.disable('x-powered-by');
   app.use((req,res,next)=>{req.requestId=randomUUID();res.set('X-Request-ID',req.requestId);res.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');if(req.path.startsWith('/api')||req.path.startsWith('/auth'))res.set('Cache-Control','no-store');next();});
   if (env.NODE_ENV === 'production') app.set('trust proxy', 1);
@@ -54,25 +58,29 @@ export function createWeb({ client, env, store, resolveContext = context, receip
       requireThat(!req.query.error && (!req.query.iss || req.query.iss === 'https://discord.com'),'KAGE-OAUTH','Autorização recusada ou emissor inválido.',401);
       requireThat(sameSecret(req.query.state, req.session.oauthState) && Date.now() - req.session.oauthAt < 300000 && typeof req.query.code === 'string' && /^[A-Za-z0-9._~-]{1,512}$/.test(req.query.code), 'KAGE-OAUTH-STATE', 'Autorização expirada ou inválida. Entre novamente.', 401);
       delete req.session.oauthState; delete req.session.oauthAt;
-      await new Promise((resolve, reject) => req.session.save(e => e ? reject(e) : resolve()));
-      const r = await fetch('https://discord.com/api/v10/oauth2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: env.DISCORD_CLIENT_ID, client_secret: env.DISCORD_CLIENT_SECRET, grant_type: 'authorization_code', code: req.query.code, redirect_uri: env.DISCORD_REDIRECT_URI }), signal: AbortSignal.timeout(10000) });
+      await persistSession(cb => req.session.save(cb));
+      let r;
+      try { r = await fetch('https://discord.com/api/v10/oauth2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: env.DISCORD_CLIENT_ID, client_secret: env.DISCORD_CLIENT_SECRET, grant_type: 'authorization_code', code: req.query.code, redirect_uri: env.DISCORD_REDIRECT_URI }), signal: AbortSignal.timeout(10000) }); }
+      catch { throw new KageError('KAGE-OAUTH', 'O Discord não respondeu. Tente novamente em instantes.', 503); }
       requireThat(r.ok, 'KAGE-OAUTH', 'Não foi possível concluir a autorização.', 401);
-      const token = await r.json();
+      let token;
+      try { token = await r.json(); } catch { throw new KageError('KAGE-OAUTH', 'Resposta inesperada do Discord. Tente novamente.', 502); }
       requireThat(typeof token.access_token === 'string' && token.access_token.length > 0 && token.access_token.length <= 512, 'KAGE-OAUTH', 'Não foi possível concluir a autorização.', 401);
       const accessToken = token.access_token, tokenTtl = Number(token.expires_in);
       const user = await discordFetch('/users/@me', accessToken);
-      await new Promise((resolve, reject) => req.session.regenerate(e => e ? reject(e) : resolve()));
-      req.session.userEpoch=(await sessionEpochs.findOne({userId:user.id}).lean())?.epoch||0;
+      await persistSession(cb => req.session.regenerate(cb));
+      req.session.userEpoch=await epochOf(user.id);
       req.session.user = { id: user.id, username: user.username, avatar: user.avatar };
       req.session.accessTokenEncrypted=seal(accessToken,env.SESSION_ENCRYPTION_KEY||env.SESSION_SECRET);
       if(req.get('X-Kage-Background')!=='1')req.session.lastSeenAt=Date.now();
       req.session.csrf = randomBytes(32).toString('hex');
       req.session.expiresAt = Date.now() + Math.min(Number.isFinite(tokenTtl) && tokenTtl > 0 ? tokenTtl * 1000 : 3600000, 3600000);
-      req.session.save(e => e ? next(e) : res.redirect('/'));
+      await persistSession(cb => req.session.save(cb));
+      res.redirect('/');
     } catch (e) { next(e); }
   });
   app.get('/api/bootstrap', async (req, res, next) => {
-    try { const epoch=sessionValid(req.session)?await sessionEpochs.findOne({userId:req.session.user.id}).lean():null;if((req.session.userEpoch||0)!==(epoch?.epoch||0))return res.json({mode:'live',user:null,discordReady:client.isReady()});
+    try { const epoch=sessionValid(req.session)?await epochOf(req.session.user.id):0;if((req.session.userEpoch||0)!==epoch)return res.json({mode:'live',user:null,discordReady:client.isReady()});
     res.set('Cache-Control', 'no-store');
     res.json({ mode: 'live', user: sessionValid(req.session) ? req.session.user : null, csrf: sessionValid(req.session) ? req.session.csrf : undefined, discordReady: client.isReady(), messageContent: env.ENABLE_MESSAGE_CONTENT === 'true' });
     } catch(e){next(e);}
@@ -80,7 +88,7 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.get('/runtime.json', (req, res) => res.set('Cache-Control', 'no-store').json({ mode: 'live' }));
   app.use('/api', async (req, res, next) => {
     if(!sessionValid(req.session))return res.status(401).json(errorEnvelope(Object.assign(new Error('Entre com Discord para continuar.'),{code:'AUTH_REQUIRED'}),req.requestId));
-    try{const epoch=await sessionEpochs.findOne({userId:req.session.user.id}).lean();if((req.session.userEpoch||0)!==(epoch?.epoch||0))return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão revogada. Entre novamente.'},req.requestId));}catch(e){return next(e);}
+    try{if((req.session.userEpoch||0)!==await epochOf(req.session.user.id))return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão revogada. Entre novamente.'},req.requestId));}catch(e){return next(e);}
     if(req.get('X-Kage-Background')!=='1')req.session.lastSeenAt=Date.now();
     res.set('Cache-Control', 'no-store');
     try{if(!['GET','HEAD'].includes(req.method))checkCsrf(req.get('Origin'),env.PUBLIC_ORIGIN,req.get('X-CSRF-Token'),req.session.csrf);}catch(e){return next(e);}
@@ -91,7 +99,10 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.get('/api/me',async(req,res,next)=>{try{res.json({user:req.session.user,preferences:await UserPreference.findOne({userId:req.session.user.id}).select('-_id -__v').lean()});}catch(e){next(e);}});
   app.get('/api/guilds', async (req, res, next) => {
     try {
-      const guilds = await discordFetch('/users/@me/guilds', unseal(req.session.accessTokenEncrypted,env.SESSION_ENCRYPTION_KEY||env.SESSION_SECRET));
+      let accessToken;
+      try { accessToken = unseal(req.session.accessTokenEncrypted,env.SESSION_ENCRYPTION_KEY||env.SESSION_SECRET); }
+      catch { throw new KageError('AUTH_REQUIRED','Sessão inválida. Entre novamente.',401); }
+      const guilds = await discordFetch('/users/@me/guilds', accessToken);
       const delegated=await GuildAccess.find({guildId:{$in:guilds.filter(g=>client.guilds.cache.has(g.id)).map(g=>g.id)}}).lean(),result=[];
       for(const g of guilds){if(!client.guilds.cache.has(g.id))continue;let scopes;if(g.owner||canManageBits(g.permissions))scopes=['view','settings','security','moderation','messages','structure','roles','backups','schedules','audit'];else{const policy=delegated.find(p=>p.guildId===g.id);if(!policy)continue;try{const ctx=await resolveContext(client,g.id,req.session.user.id,{manager:false});scopes=allowedScopes(ctx,policy);}catch{continue;}}if(scopes.length)result.push({id:g.id,name:g.name,icon:g.icon,memberCount:client.guilds.cache.get(g.id).memberCount,scopes});}res.json(result);
     } catch(e) { next(e); }
@@ -145,8 +156,9 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url)), { maxAge: 0 }));
   app.use((err, req, res, next) => {
     const bodyError=['entity.too.large','entity.parse.failed'].includes(err.type);
+    if(!bodyError&&!(err instanceof KageError)&&/discord/i.test(err?.name||''))err=new KageError('KAGE-DISCORD','O Discord não respondeu como esperado. Tente novamente.',503);
     const known=bodyError||err instanceof KageError || Number.isInteger(err.status)&&typeof err.code==='string';
-    console.error('Kage HTTP:', bodyError?'SCHEMA_INVALID':known ? err.code : 'KAGE-DEPENDENCY');
+    console.error('Kage HTTP:', bodyError?'SCHEMA_INVALID':known ? err.code : 'KAGE-DEPENDENCY', req.requestId, err.name||'Error', redactSecrets(String(err.message||'')).slice(0,160));
     if (res.headersSent) return next(err);
     res.status(known?err.status:503).json(errorEnvelope(err,req.requestId));
   });

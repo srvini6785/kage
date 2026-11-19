@@ -11,24 +11,29 @@ function saveDemo(id, state) {
 export const api = {
   mode: 'loading', csrf: '', user: null,
   async init() {
-    const runtime = await fetch('./runtime.json', { cache: 'no-store', signal: AbortSignal.timeout(6000) });
-    if (!runtime.ok) throw new Error('Não foi possível verificar o ambiente do Kage.');
-    const descriptor = await runtime.json();
-    if(descriptor.mode === 'demo') { this.mode = 'demo'; this.user = { username: 'Marcos Vinicius' }; return; }
-    if(descriptor.mode !== 'live') throw new Error('Ambiente desconhecido. Nenhuma ação foi habilitada.');
-    let res;
-    try { res = await fetch('./api/bootstrap', { signal: AbortSignal.timeout(6000) }); }
-    catch { this.mode = 'unavailable'; throw new Error('Não foi possível verificar a conexão. Atualize para tentar novamente.'); }
-    if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) { this.mode = 'unavailable'; throw new Error('O serviço não confirmou seu estado. Tente atualizar a página.'); }
-    const data = await res.json();
-    this.mode = data.mode; this.user = data.user; this.csrf = data.csrf; this.discordReady = data.discordReady;
-    this.messageContent = data.messageContent;
-    if(this.user){const me=await this.request('me');this.preferences=me.preferences||{};if(this.preferences.theme)document.documentElement.dataset.theme=this.preferences.theme;}
+    Object.assign(this,{mode:'loading',user:null,csrf:'',discordReady:false,messageContent:false,preferences:{},preferencesError:null});
+    try {
+      const runtime = await fetch('./runtime.json', { cache: 'no-store', credentials:'same-origin', signal: AbortSignal.timeout(20000) });
+      if (!runtime.ok) throw new Error('Não foi possível verificar o ambiente do Kage.');
+      const descriptor = await runtime.json().catch(()=>null);
+      if(descriptor?.mode !== 'live') throw new Error('Ambiente desconhecido. Nenhuma ação foi habilitada.');
+      const data = await this.request('bootstrap');
+      if(data?.mode!=='live'||!(data.user===null||typeof data.user?.id==='string'&&typeof data.user?.username==='string')||data.user&&typeof data.csrf!=='string')throw new Error('O serviço não confirmou seu estado. Tente atualizar a página.');
+      this.mode = 'live'; this.user = data.user; this.csrf = data.csrf; this.discordReady = data.discordReady;
+      this.messageContent = data.messageContent;
+      if(this.user){
+        try{const me=await this.request('me');this.preferences=me.preferences||{};if(['light','dark'].includes(this.preferences.theme))document.documentElement.dataset.theme=this.preferences.theme;}
+        catch(e){if(e.status===401)throw e;this.preferencesError='Suas preferências não foram carregadas. '+e.message;}
+      }
+    } catch(e) { this.mode=e.status===401?'live':'unavailable';this.user=null;this.csrf='';throw e; }
   },
   async request(path, method = 'GET', body, {background=false}={}) {
-    const res = await fetch('./api/' + path, { method, headers: { 'Content-Type': 'application/json', ...(background?{'X-Kage-Background':'1'}:{}), ...(!['GET','HEAD'].includes(method)?{'Idempotency-Key':crypto.randomUUID()}:{}), ...(this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20000) });
-    const data = await res.json();
-    if(!res.ok){const e=new Error((data.message||'Não foi possível confirmar esta ação.')+(data.requestId?' Referência: '+data.requestId:''));Object.assign(e,{code:data.code,state:data.state,fieldErrors:data.fieldErrors});throw e;}
+    let res;
+    try { res = await fetch('./api/' + path, { method, cache:'no-store', credentials:'same-origin', headers: { 'Content-Type': 'application/json', ...(background?{'X-Kage-Background':'1'}:{}), ...(!['GET','HEAD'].includes(method)?{'Idempotency-Key':crypto.randomUUID()}:{}), ...(this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20000) }); }
+    catch { throw Object.assign(new Error('A conexão não respondeu. Tente novamente; se estava salvando, confira a operação antes de repetir.'),{code:'NETWORK_UNAVAILABLE'}); }
+    const data = await res.json().catch(()=>undefined);
+    if(res.status===401){this.user=null;this.csrf='';this.preferences={};throw Object.assign(new Error('Sua sessão expirou ou foi revogada. Entre novamente com Discord.'),{status:401,code:'AUTH_REQUIRED'});}
+    if(!res.ok||data===undefined){const e=new Error((data?.message||(res.status===429?'Muitas solicitações. Aguarde um minuto e tente novamente.':'O serviço não confirmou seu estado. Tente atualizar a página.'))+(data?.requestId?' Referência: '+data.requestId:''));Object.assign(e,{status:res.status,code:data?.code,state:data?.state,fieldErrors:data?.fieldErrors});throw e;}
     return data;
   },
   async guilds() { return this.mode === 'demo' ? clone(demoGuilds) : this.request('guilds'); },

@@ -52,7 +52,15 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:', 'https://cdn.discordapp.com'], connectSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'self'"], formAction: ["'self'"] } } }));
   const jsonBody=express.json({limit:'128kb'}),templateBody=express.json({limit:'1mb'}),assetBody=express.json({limit:'4mb'}),backupBody=express.json({limit:'2mb'});
   const bodyFor=req=>/^\/guilds\/\d{17,20}\/templates\/import$/.test(req.path)?templateBody:/^\/guilds\/\d{17,20}\/backup\/import$/.test(req.path)?backupBody:/^\/guilds\/\d{17,20}\/assets$/.test(req.path)?assetBody:jsonBody;
-  app.use(session({ name: sessionCookieName, secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, crypto: { secret: sessionCryptoSecret(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET) } }), cookie: { ...sessionCookieOpts, maxAge: 3600000 } }));
+  app.use(session({ name: sessionCookieName, secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, serialize: JSON.stringify, unserialize: value => value, crypto: { secret: sessionCryptoSecret(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET) } }), cookie: { ...sessionCookieOpts, maxAge: 3600000 } }));
+  app.use((err,req,res,next)=>{
+    if(!/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))&&!(err instanceof SyntaxError))return next(err);
+    console.error('Kage sessão:', 'STALE_SESSION', req.requestId);
+    clearSessionCookie(res);
+    if(req.path==='/auth/callback')return res.redirect('/?falha=KAGE-OAUTH-STATE#home');
+    if(['GET','HEAD'].includes(req.method)&&!/^\/api(\/|$)/i.test(req.path))return res.redirect(303,req.path==='/auth/login'?'/auth/login':'/');
+    return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão inválida. Entre novamente.'},req.requestId));
+  });
   app.use('/api', rateLimit({ windowMs: 60000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false }));
   app.use('/auth', rateLimit({ windowMs: 60000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false }));
   app.get('/health',(req,res)=>res.json({status:'ok'}));
@@ -64,7 +72,7 @@ export function createWeb({ client, env, store, resolveContext = context, receip
     req.session.oauthState = randomBytes(32).toString('hex'); req.session.oauthAt = Date.now();
     const url = new URL('https://discord.com/oauth2/authorize');
     for (const [k, v] of Object.entries({ client_id: env.DISCORD_CLIENT_ID, redirect_uri: env.DISCORD_REDIRECT_URI, response_type: 'code', scope: 'identify guilds', state: req.session.oauthState })) url.searchParams.set(k, v);
-    req.session.save(e => { if(e) return res.status(503).send('Sessão indisponível.'); res.redirect(url.toString()); });
+    req.session.save(e => { if(e) return res.redirect('/?falha=KAGE-DATABASE#home'); res.redirect(url.toString()); });
   });
   app.get('/auth/callback', async (req, res, next) => {
     try {
@@ -89,12 +97,8 @@ export function createWeb({ client, env, store, resolveContext = context, receip
       req.session.csrf = randomBytes(32).toString('hex');
       req.session.expiresAt = Date.now() + Math.min(Number.isFinite(tokenTtl) && tokenTtl > 0 ? tokenTtl * 1000 : 3600000, 3600000);
       await persistSession(cb => req.session.save(cb));
-      res.redirect('/');
+      res.redirect('/#overview');
     } catch (e) {
-      if (e instanceof KageError) {
-        console.error('Kage OAuth:', e.code, req.requestId, redactSecrets(String(e.message||'')).slice(0,160));
-        return res.redirect('/?falha=' + encodeURIComponent(e.code));
-      }
       next(e);
     }
   });
@@ -177,11 +181,10 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     const bodyError=['entity.too.large','entity.parse.failed'].includes(err.type);
-    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))||(err instanceof SyntaxError&&/undefined|unexpected token|is not valid json/i.test(String(err.message||'')))){
-      console.error('Kage sessão:', 'STALE_SESSION', req.requestId);
-      res.clearCookie(sessionCookieName,sessionCookieOpts);
-      if(['GET','HEAD'].includes(req.method)&&!/^\/api(\/|$)/.test(req.path))return res.redirect(303, req.originalUrl.split('?')[0] || '/');
-      return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão inválida. Entre novamente.'},req.requestId));
+    if(req.path==='/auth/callback'){
+      const code=err instanceof KageError?err.code:'KAGE-DATABASE';
+      console.error('Kage OAuth:',code,req.requestId);
+      return res.redirect('/?falha='+encodeURIComponent(code)+'#home');
     }
     if(!bodyError&&!(err instanceof KageError)&&/discord/i.test(err?.name||''))err=new KageError('KAGE-DISCORD','O Discord não respondeu como esperado. Tente novamente.',503);
     const known=bodyError||err instanceof KageError || Number.isInteger(err.status)&&typeof err.code==='string';

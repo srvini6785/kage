@@ -47,6 +47,15 @@ A preparação de staging ganhou uma pré-checagem local somente leitura que val
 
 O anúncio de rota passou a ser uma função única, deduplicada pela rota e não pelo texto, evitando repetição ao atualizar a mesma tela e cobrindo telas públicas e acessos negados. Os testes verificam anúncio em Documentos, acesso negado, silêncio após atualização e novo anúncio ao trocar de rota negada. A lista de permissões do bot na pré-checagem virou constante única. Nenhum fluxo de negócio mudou e a suíte permanece com 186 testes.
 
+## Persistência de login e entrada no painel em 19/11/2026
+
+- Reproduzida falha em sessão nova com connect-mongo 5.1.0 e kruptein reais: decryptSession já converte JSON em objeto, mas o unserialize padrão tenta JSON.parse novamente. A configuração agora serializa uma vez e preserva o objeto já decifrado, sem desligar a criptografia.
+- A recuperação anterior apenas limpava o cookie e não corrigia o roundtrip. O callback bem-sucedido agora retorna a /#overview; falhas retornam ao login com mensagem persistente, sem repetir um código OAuth consumido.
+- Entrada sem sessão apresenta somente o login Discord, sem a casca do painel ou guilda fictícia. Conta autenticada em home/login abre diretamente Visão geral. O runtime estático é live e descritores demo antigos são rejeitados; fixtures continuam restritas aos testes.
+- Ausência de servidores, sessão expirada e indisponibilidade têm caminhos separados de recuperação. Respostas JSON null válidas continuam representando rascunhos ausentes. O botão Atualizar não anuncia sucesso quando a reinicialização falha; a regressão foi reproduzida em teste antes da correção.
+- Evidências locais usam MongoStore/kruptein reais com coleção simulada e Discord simulado: 228 testes aprovados e 16 cenários no Edge headless isolado com fixtures locais. Login desktop/móvel e dashboard foram inspecionados; não equivale a login OAuth real nem aprovação de produção.
+- Antes da publicação, o Render ainda servia assets do commit 598c842 e respondia 401 limpando o cookie recém-criado por /auth/login. O usuário autorizou commit/push desta correção; a conferência externa posterior deve confirmar assets novos e leituras de sessão sem descarte do cookie, mantendo OAuth completo como aceite separado.
+
 ## Endurecimento pós-publicação em 19/11/2026
 
 - Parsers JSON foram movidos para depois da autenticação e do CSRF, com teto por rota, para que corpos grandes de requisições anônimas sejam recusados com 401 sem leitura.

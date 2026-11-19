@@ -1,7 +1,18 @@
 {
   "product": "Kage",
   "version": "0.6.5",
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-19",
+  "sessionRecoveryFollowUp": {
+    "cause": "connect-mongo decifrava e fazia JSON.parse; unserialize padrão repetia o parse em sessão nova",
+    "fix": "serialize JSON.stringify e unserialize identidade, mantendo cifra; OAuth retorna /#overview",
+    "frontend": "Entrada dedicada ao login sem casca do painel; home/login autenticados abrem diretamente Visão geral; runtime live e rejeição de demo antiga; recuperação explícita de falhas",
+    "tests": ["tests/session-roundtrip.test.js", "tests/api-session.test.js", "tests/app-auth-flow.test.js"],
+    "evidence": "Dependências reais de sessão com coleção e Discord simulados; 16 cenários no Edge headless isolado com fixtures locais, sem erros de JavaScript; login e painel desktop/móvel inspecionados",
+    "preDeploymentEvidence": "Render servia assets do commit 598c842; login 302 criava cookie e bootstrap seguinte retornava 401 AUTH_REQUIRED limpando a sessão nova",
+    "deploymentAcceptance": "Commit e push autorizados pelo usuário; confirmar assets novos e leituras repetidas da sessão no Render; OAuth completo continua separado",
+    "validation": {"date": "2026-11-19", "platform": "win32", "node": "24.15.0", "syntax": "passed", "lintErrors": 0, "lintWarnings": 10, "typedContracts": "passed", "tests": 228, "failed": 0, "doctor": "passed", "traceability": "passed", "build": "passed", "manifest": "passed in source and dist", "manifestFiles": 158},
+    "realOAuthVerified": false
+  },
   "previousRelease": "Kage_v0.6.4.zip",
   "resumeInstructions": "RETOMAR_WINDOWS.md",
   "agentInstructions": "AGENTS.md",

@@ -464,9 +464,17 @@
         "backend/guards.js",
         "backend/models.js",
         "public/api.js",
+        "public/app.js",
+        "public/extended.js",
+        "public/index.html",
+        "public/runtime.json",
+        "public/workspace.css",
         "public/feature-panels.js"
       ],
       "tests": [
+        "tests/session-roundtrip.test.js",
+        "tests/api-session.test.js",
+        "tests/app-auth-flow.test.js",
         "tests/dashboard.test.js",
         "tests/context.test.js",
         "tests/advanced.test.js",

@@ -40,7 +40,7 @@ test('Pausa ou mudança de versão invalida o plano pendente', async () => {
 });
 test('Falha no serviço real não se apresenta como demonstração', async () => {
   const previous = globalThis.fetch;
-  globalThis.fetch = async url => String(url).includes('runtime.json') ? { ok:true,json:async()=>({mode:'live'}) } : {status:503,ok:false};
+  globalThis.fetch = async url => String(url).includes('runtime.json') ? Response.json({mode:'live'}) : new Response('Serviço indisponível',{status:503});
   await assert.rejects(api.init(),/serviço não confirmou/);
   assert.notEqual(api.mode,'demo');
   globalThis.fetch = previous;

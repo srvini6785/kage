@@ -17,7 +17,9 @@ test('Tela de login em produção não exibe rótulos de demonstração',async t
  await import('../public/app.js');await tick();
  const main=document.querySelector('#main').textContent;
  assert.match(main,/Entrar com Discord/);
- assert.doesNotMatch(main,/Demonstração/);
+ assert.doesNotMatch(main,/demonstração/i);
+ assert.equal(document.querySelector('#sidebar-guild').textContent,'Nenhum servidor selecionado');
+ assert.equal(document.querySelector('#mode-pill').textContent,'Entre com Discord');
  assert.doesNotMatch(document.querySelector('#mode-pill').textContent,/Demonstração/);
  assert.doesNotMatch(document.querySelector('#connection-label').textContent,/demonstração/i);
  assert.equal(document.querySelector('#connection-label').textContent,'Conectado ao Discord');

@@ -15,6 +15,18 @@
 | HTTP demo | 7 recursos atuais retornaram 200, incluindo HTML 0.6.5 e arquivos novos |
 | Preservação | Checkpoint antes das edições, nenhum arquivo anterior removido, PDF original inalterado |
 
+## Regressão de login em 19/11/2026
+
+A falha `"[object Object]" is not valid JSON` foi reproduzida em sessão nova com connect-mongo/kruptein reais e coleção local simulada, sem Atlas. A dupla desserialização foi removida mantendo a cifra. Testes de sessão cobrem login, callback, leituras subsequentes e logout; testes de API/interface cobrem estado autenticado, entrada por home, sessão expirada, falhas HTTP/rede, lista vazia e recuperação.
+
+A validação final em Windows/Node.js 24.15.0 aprovou sintaxe, contratos e 228 testes, sem falhas. O lint terminou com zero erros e dez avisos no-unsanitized já existentes; não foi declarada ausência de todos os riscos de XSS. Doctor sem problemas e rastreabilidade com 141 seções e caminhos válidos, mantendo 79 implementados localmente, 15 verificados localmente e 47 parciais.
+
+O navegador integrado não completou a navegação nesta retomada. A verificação foi concluída em Microsoft Edge headless com perfil temporário isolado: 16 cenários passaram, incluindo home/login autenticados → Visão geral, construtor com resposta null para rascunho ausente, Configurações, Tickets, 503, repetição de falha sem anúncio falso de sucesso, retry, 401 com novo login, lista vazia, recuperação dos servidores, menu móvel, login anônimo móvel/desktop e recarga autenticada. A troca de cenário no teste exige recarga completa, não apenas mudança de hash. Não houve erro de JavaScript; o menu móvel fechou ao trocar de rota e não houve rolagem horizontal em 390 × 844. Capturas de login, construtor e configurações foram inspecionadas em desktop/móvel. Respostas de API/Discord e dados de MongoDB foram simulados; OAuth real e aceite do proprietário continuam pendentes.
+
+A entrada agora mostra somente Entrar no Kage, sem painel fictício; runtime demo antigo é rejeitado. Antes da publicação, os hashes dos assets no Render correspondiam ao commit 598c842, não à correção local. /auth/login retornou 302 com cookie novo; a consulta seguinte a /api/bootstrap retornou 401 AUTH_REQUIRED e limpou esse cookie, reproduzindo a falha externa sem usar a conta do proprietário ou imprimir valores secretos.
+
+Manifesto regenerado antes do build, com 158 arquivos; build aprovado e integridade conferida na fonte e em dist, sem arquivos ausentes ou hashes divergentes. Commit e push desta correção foram autorizados pelo proprietário. A aceitação externa requer assets novos e leituras repetidas da sessão sem descarte do cookie no Render; isso não substitui OAuth completo com a conta do proprietário. Nenhuma migração ou comando Discord foi executado nesta rodada.
+
 ## Revisão visual e acessibilidade
 
 15 rotas foram abertas em navegador real em 320, 768 e 1440px, nos temas escuro e claro. Não houve rolagem horizontal da página em nenhuma combinação; o único excesso interno é o ponto de presença de um avatar de 30px, que não desloca o layout. O axe-core não apontou violações nas 15 rotas nos dois temas. O contraste amostrado ficou entre 5,74:1 e 10,31:1, acima do mínimo AA para texto normal. Menu móvel, Escape e retorno de foco foram exercitados; a 0.6.2 adiciona anúncio de rota em região viva e regras de movimento reduzido verificadas na demo, mas leitor de tela real não foi executado nesta sessão. A 0.6.3 centraliza o anúncio em uma função deduplicada por rota e cobre em teste as telas públicas, o acesso negado, o silêncio ao atualizar a mesma rota e o novo anúncio ao mudar de rota negada.

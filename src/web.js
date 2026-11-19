@@ -163,7 +163,7 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     const bodyError=['entity.too.large','entity.parse.failed'].includes(err.type);
-    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))){
+    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))||(err instanceof SyntaxError&&/undefined|unexpected token/i.test(String(err.message||'')))){
       console.error('Kage sessão:', 'STALE_SESSION', req.requestId);
       res.clearCookie('kage.sid',{path:'/',secure:env.NODE_ENV==='production'});
       if(['GET','HEAD'].includes(req.method)&&!/^\/api(\/|$)/.test(req.path))return res.redirect(303, req.originalUrl.split('?')[0] || '/');

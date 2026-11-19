@@ -1,5 +1,17 @@
 # Alterações do Kage
 
+## Endurecimento 0.6.5 — 19/11/2026
+
+- Parsers JSON saíram da pilha global e passaram a rodar depois da sessão, revogação por epoch e CSRF, mantendo os tetos de 128 KiB, 1 MiB, 2 MiB e 4 MiB por rota. Requisições sem sessão não são mais lidas antes da autenticação.
+- `SESSION_SECRET` deixou de ser reutilizado como chave de cifra e de mascaramento: chaves derivadas por HKDF (`oauth-token`, `pseudonym`, `log-mask`) separam os usos. Em produção, `SESSION_ENCRYPTION_KEY` é obrigatória e precisa ser diferente de `SESSION_SECRET`.
+- `trust proxy` e `Secure` do cookie derivam de `PUBLIC_ORIGIN` HTTPS; em produção o cookie passa a ser `__Host-kage.sid` (Secure, Path=/, sem Domain).
+- Negativas de acesso gravam no máximo um registro de auditoria por usuário a cada 60 segundos, com o ID real da guilda truncado.
+- Logout e exclusão de dados tentam revogar o token OAuth2 no Discord antes de destruir a sessão.
+- `/health` responde apenas `{status:'ok'}` e `/ready` responde 200/503 sem versão ou detalhes internos. A pré-checagem de staging valida apenas o status.
+- Falha de inicialização registra nome e código do erro, sem segredos.
+- Recibos de idempotência não são gravados para `/backup` e `/access`; `.gitignore` cobre chaves, ZIPs, backups e uploads; ESLint analisa sinks do painel com `eslint-plugin-no-unsanitized`.
+- Validação local com 195 testes. Usuários precisam entrar novamente após o deploy por causa do novo nome e da nova chave do cookie.
+
 ## 0.6.5 — 18/11/2026
 
 - Login do painel deixou de retornar 503: a chave da sessão no MongoDB é derivada de `SESSION_ENCRYPTION_KEY`/`SESSION_SECRET` para um valor que sempre atende à complexidade exigida pelo kruptein. Sessões anteriores são descartadas e o usuário entra novamente.

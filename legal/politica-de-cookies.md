@@ -4,7 +4,7 @@
 
 ## Sessão necessária
 
-kage.sid identifica a sessão no servidor; é HttpOnly, Secure em HTTPS e SameSite=Lax por padrão. Preview HTTPS incorporado pode usar SameSite=None com Secure. Login regenera a sessão; logout/exclusão a revogam. Há prazo absoluto de uma hora e inatividade máxima de trinta minutos; consultas de fundo não renovam a atividade.
+`__Host-kage.sid` (em produção) ou `kage.sid` (fora de produção) identifica a sessão no servidor; é HttpOnly, Secure em HTTPS, Path=/ e SameSite=Lax por padrão, sem atributo Domain. Preview HTTPS incorporado pode usar SameSite=None com Secure. Login regenera a sessão; logout/exclusão a revogam. Há prazo absoluto de uma hora e inatividade máxima de trinta minutos; consultas de fundo não renovam a atividade.
 
 ## Preferências e demonstração
 

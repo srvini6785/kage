@@ -136,9 +136,7 @@ async function checkHttp(env, checks) {
     add(checks, 'http.health', 'fail', '/health respondeu HTTP ' + health.status + '.');
     return;
   }
-  const body = await health.json().catch(() => null);
-  if (body?.version === version) add(checks, 'http.health', 'pass', '/health respondeu com a versão ' + version + '.');
-  else add(checks, 'http.version', 'warn', '/health respondeu versão ' + (body?.version || 'ausente') + '; esperado ' + version + '.');
+  add(checks, 'http.health', 'pass', '/health respondeu HTTP 200.');
   try {
     const ready = await fetch(base + '/ready', { signal: AbortSignal.timeout(8000) });
     if (ready.status === 200) add(checks, 'http.ready', 'pass', '/ready confirmou banco e bot prontos.');

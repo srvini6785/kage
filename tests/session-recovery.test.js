@@ -7,7 +7,7 @@ import {createWeb} from '../src/web.js';
 test('Sessão antiga indecifrável é descartada sem derrubar a página',async t=>{
   const secret='fixture-secret-with-more-than-32-characters',signed=id=>'kage.sid='+encodeURIComponent('s:'+id+'.'+createHmac('sha256',secret).update(id).digest('base64').replace(/=+$/,'')),cookie=signed('antigo');
   const store=new session.MemoryStore();
-  store.get=(id,cb)=>setImmediate(()=>!id?cb(null,null):id==='antigo'?cb(new Error('Unsupported state or unable to authenticate data')):id==='antigo2'?cb(new SyntaxError('"undefined" is not valid JSON')):cb(null,null));
+  store.get=(id,cb)=>setImmediate(()=>!id?cb(null,null):id==='antigo'?cb(new Error('Unsupported state or unable to authenticate data')):id==='antigo2'?cb(new SyntaxError('"undefined" is not valid JSON')):id==='antigo3'?cb(new SyntaxError('"[object Object]" is not valid JSON')):cb(null,null));
   const app=createWeb({client:{isReady:()=>true},env:{SESSION_SECRET:secret,PUBLIC_ORIGIN:'https://kage.test',NODE_ENV:'test'},store,sessionEpochs:{findOne:()=>({lean:async()=>null})},receipts:{},resolveContext:async()=>{}});
   const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));
   const base='http://127.0.0.1:'+server.address().port;
@@ -19,6 +19,10 @@ test('Sessão antiga indecifrável é descartada sem derrubar a página',async t
   assert.equal(undecodable.status,303);
   assert.equal(undecodable.headers.get('location'),'/');
   assert.match(undecodable.headers.get('set-cookie')||'',/kage\.sid=;/);
+  const legacy=await fetch(base+'/',{headers:{Cookie:signed('antigo3')},redirect:'manual'});
+  assert.equal(legacy.status,303);
+  assert.equal(legacy.headers.get('location'),'/');
+  assert.match(legacy.headers.get('set-cookie')||'',/kage\.sid=;/);
   const fresh=await fetch(base+'/');
   assert.equal(fresh.status,200);
   assert.match(await fresh.text(),/Kage/);

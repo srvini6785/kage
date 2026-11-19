@@ -99,7 +99,7 @@ A reconciliação assistida pelo proprietário já existe na tela Backups e não
 
 ## Fechamento 0.6.5
 
-- O login deixou de depender da complexidade do segredo: a chave do session store é derivada. Após o deploy, `/auth/login` deve responder 302 e o cookie `kage.sid` deve sair `Secure` com `NODE_ENV=production`.
+- O login deixou de depender da complexidade do segredo: a chave do session store é derivada. Após o deploy, `/auth/login` deve responder 302 e o cookie `__Host-kage.sid` deve sair `Secure`, `Path=/` e sem `Domain` com `NODE_ENV=production`.
 - Registre `https://<origem>/auth/callback` no portal do Discord antes de entrar; divergência de callback continua bloqueando o OAuth2.
 - Para IA, configure `AI_PROVIDER_STYLE=openai`, `AI_PROVIDER_MODEL`, URL, allowlist e token no ambiente; ative Message Content Intent e `ENABLE_MESSAGE_CONTENT=true`; por servidor, selecione "Somente revisão humana" e marque o provedor aprovado. Confirme que o resultado é revisão, nunca sanção.
 - Para bot público, rode `npm run register:global`, marque Public Bot no portal, preencha Termos/Privacidade e acompanhe o limite de 100 servidores para verificação.

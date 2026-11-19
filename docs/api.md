@@ -4,7 +4,7 @@ Todas as escritas autenticadas exigem Origin igual a PUBLIC_ORIGIN, X-CSRF-Token
 
 | Recurso | Métodos | Comportamento |
 | --- | --- | --- |
-| /health e /ready | GET | Liveness e readiness |
+| /health e /ready | GET | Liveness (`{status:'ok'}`) e readiness (200/503 sem detalhes internos) |
 | /api/me | GET/PUT | Perfil e preferências globais |
 | /api/guilds | GET | Guildas autorizadas |
 | /api/guilds/:id/settings | GET/PUT | Configuração por versão |

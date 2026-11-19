@@ -47,6 +47,14 @@ A preparação de staging ganhou uma pré-checagem local somente leitura que val
 
 O anúncio de rota passou a ser uma função única, deduplicada pela rota e não pelo texto, evitando repetição ao atualizar a mesma tela e cobrindo telas públicas e acessos negados. Os testes verificam anúncio em Documentos, acesso negado, silêncio após atualização e novo anúncio ao trocar de rota negada. A lista de permissões do bot na pré-checagem virou constante única. Nenhum fluxo de negócio mudou e a suíte permanece com 186 testes.
 
+## Endurecimento pós-publicação em 19/11/2026
+
+- Parsers JSON foram movidos para depois da autenticação e do CSRF, com teto por rota, para que corpos grandes de requisições anônimas sejam recusados com 401 sem leitura.
+- Chaves passaram a ser segregadas por HKDF a partir do segredo mestre: token OAuth2 (`oauth-token`), pseudônimo de exclusão (`pseudonym`) e máscara de logs (`log-mask`). Em produção, `SESSION_ENCRYPTION_KEY` é obrigatória e distinta de `SESSION_SECRET`.
+- `trust proxy` e `Secure` seguem `PUBLIC_ORIGIN`; o cookie de produção vira `__Host-kage.sid`.
+- Auditoria de acesso negado é limitada a um registro por usuário a cada 60 segundos; logout e exclusão revogam o token no Discord; `/health` e `/ready` deixam de expor versão e estado interno; idempotência não grava `/backup` e `/access`.
+- O deploy invalida sessões antigas: o usuário entra novamente.
+
 ## Publicação 0.6.5 em 18/11/2026
 
 - O login retornava 503 em produção porque o connect-mongo usa kruptein, que exige ao menos duas maiúsculas, duas minúsculas, dois dígitos e dois caracteres especiais no segredo. Segredos base64url falham nessa regra com frequência. A chave do session store passou a ser derivada por SHA-256 em base64url com sufixo fixo, garantindo a complexidade sem reduzir a entropia da configuração.

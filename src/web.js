@@ -10,7 +10,7 @@ import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dashboardRoutes } from '../backend/routes.js';
 import { idempotencyGuard } from '../backend/idempotency.js';
-import { sessionValid, checkCsrf, seal, unseal, errorEnvelope } from '../backend/guards.js';
+import { sessionValid, checkCsrf, seal, unseal, errorEnvelope, subkey } from '../backend/guards.js';
 import { sessionCryptoSecret } from '../backend/session-secret.js';
 import { UserPreference } from '../backend/models.js';
 import { z } from 'zod';
@@ -31,19 +31,32 @@ async function discordFetch(path, token) {
 }
 export function createWeb({ client, env, store, resolveContext = context, receipts, sessionEpochs=SessionEpoch }) {
   const app = express();
+  const isHttps = String(env.PUBLIC_ORIGIN||'').startsWith('https://');
+  const secureCookie = isHttps || env.EMBEDDED_PREVIEW === 'true';
+  const sessionCookieName = env.NODE_ENV === 'production' ? '__Host-kage.sid' : 'kage.sid';
+  const sessionCookieOpts = { path: '/', httpOnly: true, sameSite: env.EMBEDDED_PREVIEW === 'true' ? 'none' : 'lax', secure: secureCookie };
+  const oauthKey = subkey(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET, 'oauth-token');
   const epochOf = async userId => { try { return (await sessionEpochs.findOne({userId}).lean())?.epoch||0; } catch { throw new KageError('KAGE-DATABASE','Banco de dados indisponível. Tente novamente em instantes.',503); } };
   const persistSession = fn => new Promise((resolve, reject) => fn(e => e ? reject(new KageError('KAGE-DATABASE','Sessão indisponível no momento. Tente novamente.',503)) : resolve()));
+  async function revokeToken(token) {
+    if (typeof token !== 'string' || !token) return;
+    try { await fetch('https://discord.com/api/v10/oauth2/token/revoke', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: env.DISCORD_CLIENT_ID, client_secret: env.DISCORD_CLIENT_SECRET, token, token_type_hint: 'access_token' }), signal: AbortSignal.timeout(5000) }); } catch {}
+  }
+  const revokeSessionToken = async req => { try { await revokeToken(unseal(req.session.accessTokenEncrypted, oauthKey)); } catch {} };
+  const clearSessionCookie = res => res.clearCookie(sessionCookieName, sessionCookieOpts);
+  const deniedAt = new Map();
+  const logDenied = (req, userId, guildId) => { const now = Date.now(); if ((deniedAt.get(userId)||0) > now - 60000) return; if (deniedAt.size > 5000) deniedAt.clear(); deniedAt.set(userId, now); Audit.create({guildId:String(guildId||'denied').slice(0,20),actorId:userId,action:'authorization.denied',result:'failed',correlationId:req.requestId,expiresAt:new Date(now+86400000)}).catch(()=>{}); };
   app.disable('x-powered-by');
   app.use((req,res,next)=>{req.requestId=randomUUID();res.set('X-Request-ID',req.requestId);res.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');if(req.path.startsWith('/api')||req.path.startsWith('/auth'))res.set('Cache-Control','no-store');next();});
-  if (env.NODE_ENV === 'production') app.set('trust proxy', 1);
+  if (isHttps || env.NODE_ENV === 'production') app.set('trust proxy', 1);
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", 'data:', 'https://cdn.discordapp.com'], connectSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'self'"], formAction: ["'self'"] } } }));
   const jsonBody=express.json({limit:'128kb'}),templateBody=express.json({limit:'1mb'}),assetBody=express.json({limit:'4mb'}),backupBody=express.json({limit:'2mb'});
-  app.use((req,res,next)=>(/^\/api\/guilds\/\d{17,20}\/templates\/import$/.test(req.path)?templateBody:/^\/api\/guilds\/\d{17,20}\/backup\/import$/.test(req.path)?backupBody:/^\/api\/guilds\/\d{17,20}\/assets$/.test(req.path)?assetBody:jsonBody)(req,res,next));
-  app.use(session({ name: 'kage.sid', secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, crypto: { secret: sessionCryptoSecret(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET) } }), cookie: { httpOnly: true, sameSite: env.EMBEDDED_PREVIEW === 'true' ? 'none' : 'lax', secure: env.NODE_ENV === 'production' || env.EMBEDDED_PREVIEW === 'true', maxAge: 3600000 } }));
+  const bodyFor=req=>/^\/guilds\/\d{17,20}\/templates\/import$/.test(req.path)?templateBody:/^\/guilds\/\d{17,20}\/backup\/import$/.test(req.path)?backupBody:/^\/guilds\/\d{17,20}\/assets$/.test(req.path)?assetBody:jsonBody;
+  app.use(session({ name: sessionCookieName, secret: env.SESSION_SECRET, resave: false, saveUninitialized: false, store: store || MongoStore.create({ mongoUrl: env.MONGO_URI, ttl: 3600, crypto: { secret: sessionCryptoSecret(env.SESSION_ENCRYPTION_KEY || env.SESSION_SECRET) } }), cookie: { ...sessionCookieOpts, maxAge: 3600000 } }));
   app.use('/api', rateLimit({ windowMs: 60000, limit: 90, standardHeaders: 'draft-8', legacyHeaders: false }));
   app.use('/auth', rateLimit({ windowMs: 60000, limit: 15, standardHeaders: 'draft-8', legacyHeaders: false }));
-  app.get('/health',(req,res)=>res.json({status:'alive',product:'Kage',version:'0.6.5'}));
-  app.get('/ready',(req,res)=>{const database=databaseReady(),bot=client.isReady();res.status(database&&bot?200:503).json({state:database&&bot?'ready':'degraded',product:'Kage',version:'0.6.5',checks:{database,bot}});});
+  app.get('/health',(req,res)=>res.json({status:'ok'}));
+  app.get('/ready',(req,res)=>res.sendStatus(databaseReady()&&client.isReady()?200:503));
   const legalNames=['termos-de-uso','politica-de-privacidade','politica-de-cookies','acessibilidade','seguranca'];
   app.get('/legal/:slug',async(req,res,next)=>{try{if(!legalNames.includes(req.params.slug))return res.sendStatus(404);res.type('text/plain').send(await readFile(fileURLToPath(new URL('../legal/'+req.params.slug+'.md',import.meta.url)),'utf8'));}catch(e){next(e);}});
   app.get('/invite',(req,res)=>{if(!/^\d{17,20}$/.test(env.DISCORD_CLIENT_ID||''))return res.status(409).json({code:'GUILD_NOT_READY',message:'Convite não configurado.'});const permissions=/^\d{1,20}$/.test(env.INVITE_PERMISSIONS||'')?env.INVITE_PERMISSIONS:defaultInvitePermissions,url=new URL('https://discord.com/oauth2/authorize');url.search=new URLSearchParams({client_id:env.DISCORD_CLIENT_ID,scope:'bot applications.commands',permissions});res.redirect(url.toString());});
@@ -71,7 +84,7 @@ export function createWeb({ client, env, store, resolveContext = context, receip
       await persistSession(cb => req.session.regenerate(cb));
       req.session.userEpoch=await epochOf(user.id);
       req.session.user = { id: user.id, username: user.username, avatar: user.avatar };
-      req.session.accessTokenEncrypted=seal(accessToken,env.SESSION_ENCRYPTION_KEY||env.SESSION_SECRET);
+      req.session.accessTokenEncrypted=seal(accessToken,oauthKey);
       if(req.get('X-Kage-Background')!=='1')req.session.lastSeenAt=Date.now();
       req.session.csrf = randomBytes(32).toString('hex');
       req.session.expiresAt = Date.now() + Math.min(Number.isFinite(tokenTtl) && tokenTtl > 0 ? tokenTtl * 1000 : 3600000, 3600000);
@@ -101,12 +114,13 @@ export function createWeb({ client, env, store, resolveContext = context, receip
     next();
   });
   app.use('/api',rateLimit({windowMs:60000,limit:90,keyGenerator:req=>req.session.user.id,standardHeaders:'draft-8',legacyHeaders:false}));
-  app.post('/api/logout',(req,res,next)=>req.session.destroy(e=>{if(e)return next(e);res.clearCookie('kage.sid',{path:'/'});res.json({ok:true});}));
+  app.use('/api',(req,res,next)=>bodyFor(req)(req,res,next));
+  app.post('/api/logout',async(req,res,next)=>{await revokeSessionToken(req);req.session.destroy(e=>{if(e)return next(e);clearSessionCookie(res);res.json({ok:true});});});
   app.get('/api/me',async(req,res,next)=>{try{res.json({user:req.session.user,preferences:await UserPreference.findOne({userId:req.session.user.id}).select('-_id -__v').lean()});}catch(e){next(e);}});
   app.get('/api/guilds', async (req, res, next) => {
     try {
       let accessToken;
-      try { accessToken = unseal(req.session.accessTokenEncrypted,env.SESSION_ENCRYPTION_KEY||env.SESSION_SECRET); }
+      try { accessToken = unseal(req.session.accessTokenEncrypted,oauthKey); }
       catch { throw new KageError('AUTH_REQUIRED','Sessão inválida. Entre novamente.',401); }
       const guilds = await discordFetch('/users/@me/guilds', accessToken);
       const delegated=await GuildAccess.find({guildId:{$in:guilds.filter(g=>client.guilds.cache.has(g.id)).map(g=>g.id)}}).lean(),result=[];
@@ -119,11 +133,11 @@ export function createWeb({ client, env, store, resolveContext = context, receip
       req.kage=await resolveContext(client,req.params.guildId,req.session.user.id,{manager:false});
       req.kage.dashboardScopes=await authorizeDashboard(req.kage,req.path);req.kage.dashboardPath=req.path;
       next();
-    } catch(e) {await Audit.create({guildId:'denied',actorId:req.session.user.id,action:'authorization.denied',result:'failed',correlationId:req.requestId,expiresAt:new Date(Date.now()+86400000)}).catch(()=>{});next(e);}
+    } catch(e) {logDenied(req,req.session.user.id,req.params.guildId);next(e);}
   });
   app.use('/api',idempotencyGuard(receipts));
   app.use('/api/guilds/:guildId/assets',rateLimit({windowMs:60000,limit:5,skip:req=>req.method!=='POST',keyGenerator:req=>req.session.user.id,standardHeaders:'draft-8',legacyHeaders:false}));
-  app.use('/api/me',privacyRoutes({secret:env.SESSION_SECRET,epochs:sessionEpochs}));
+  app.use('/api/me',privacyRoutes({secret:subkey(env.SESSION_SECRET,'pseudonym'),epochs:sessionEpochs,revoke:revokeSessionToken,cookieName:sessionCookieName,cookieOpts:sessionCookieOpts}));
   app.put('/api/me',async(req,res,next)=>{try{const p=parse(z.object({theme:z.enum(['light','dark']),notifications:z.boolean().optional(),language:z.literal('pt-BR'),timezone:z.string().max(80).refine(s=>{try{new Intl.DateTimeFormat('pt-BR',{timeZone:s});return true;}catch{return false;}})}).strict(),req.body);res.json(await UserPreference.findOneAndUpdate({userId:req.session.user.id},{$set:p},{upsert:true,new:true}).select('-_id -__v').lean());}catch(e){next(e);}});
   app.use('/api/guilds/:guildId',dashboardRoutes({client}));
   app.get('/api/guilds/:guildId/settings',(req,res)=>{const {auditOutbox,...config}=req.kage.config;res.json(config);});
@@ -163,9 +177,9 @@ export function createWeb({ client, env, store, resolveContext = context, receip
   app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
     const bodyError=['entity.too.large','entity.parse.failed'].includes(err.type);
-    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))||(err instanceof SyntaxError&&/undefined|unexpected token/i.test(String(err.message||'')))){
+    if(/unsupported state|unable to authenticate data|bad decrypt|kruptein/i.test(String(err?.message||''))||(err instanceof SyntaxError&&/undefined|unexpected token|is not valid json/i.test(String(err.message||'')))){
       console.error('Kage sessão:', 'STALE_SESSION', req.requestId);
-      res.clearCookie('kage.sid',{path:'/',secure:env.NODE_ENV==='production'});
+      res.clearCookie(sessionCookieName,sessionCookieOpts);
       if(['GET','HEAD'].includes(req.method)&&!/^\/api(\/|$)/.test(req.path))return res.redirect(303, req.originalUrl.split('?')[0] || '/');
       return res.status(401).json(errorEnvelope({code:'AUTH_REQUIRED',message:'Sessão inválida. Entre novamente.'},req.requestId));
     }

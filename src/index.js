@@ -6,15 +6,18 @@ import {startOperationWorker} from '../backend/operations.js';
 import {createAuditFlusher} from '../backend/config-outbox.js';
 import { createBot } from './bot.js';
 import { createWeb } from './web.js';
+import { subkey } from '../backend/guards.js';
 const env = process.env;
 const required = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'DISCORD_REDIRECT_URI', 'MONGO_URI', 'SESSION_SECRET', 'PUBLIC_ORIGIN'];
 for (const key of required) if (!env[key]) throw new Error('Configure a variável obrigatória ' + key + ' no ambiente. Para explorar sem credenciais: npm run demo.');
 if (env.SESSION_SECRET.length < 32) throw new Error('SESSION_SECRET precisa ter pelo menos 32 caracteres aleatórios.');
 if (env.SESSION_ENCRYPTION_KEY && env.SESSION_ENCRYPTION_KEY.length < 32) throw new Error('SESSION_ENCRYPTION_KEY precisa ter pelo menos 32 caracteres aleatórios.');
+if (env.NODE_ENV === 'production' && !env.SESSION_ENCRYPTION_KEY) throw new Error('Defina SESSION_ENCRYPTION_KEY separada de SESSION_SECRET em produção.');
+if (env.SESSION_ENCRYPTION_KEY && env.SESSION_ENCRYPTION_KEY === env.SESSION_SECRET) throw new Error('SESSION_ENCRYPTION_KEY deve ser diferente de SESSION_SECRET.');
 if (env.NODE_ENV === 'production' && !env.PUBLIC_ORIGIN.startsWith('https://')) throw new Error('PUBLIC_ORIGIN deve usar HTTPS em produção.');
 try {
   await connect(env.MONGO_URI);
-  const bot = createBot({ token: env.DISCORD_TOKEN, messageContent: env.ENABLE_MESSAGE_CONTENT === 'true',guildMembers:env.ENABLE_GUILD_MEMBERS==='true',reactions:env.ENABLE_REACTIONS==='true',nativeEvents:env.ENABLE_NATIVE_AUTOMOD_EVENTS==='true',assessAI:createAIAdapter(env),messageEvents:env.ENABLE_MESSAGE_EVENTS==='true',logMaskKey:env.SESSION_SECRET });
+  const bot = createBot({ token: env.DISCORD_TOKEN, messageContent: env.ENABLE_MESSAGE_CONTENT === 'true',guildMembers:env.ENABLE_GUILD_MEMBERS==='true',reactions:env.ENABLE_REACTIONS==='true',nativeEvents:env.ENABLE_NATIVE_AUTOMOD_EVENTS==='true',assessAI:createAIAdapter(env),messageEvents:env.ENABLE_MESSAGE_EVENTS==='true',logMaskKey:subkey(env.SESSION_SECRET,'log-mask') });
   await bot.login();
   const worker=startOperationWorker(bot.client);
   const scheduleTick=createScheduleRunner(bot.client),flushAudit=createAuditFlusher();const scheduleTimer=setInterval(()=>{scheduleTick().catch(()=>console.error('Kage scheduler: DATABASE_UNAVAILABLE'));flushAudit().catch(()=>console.error('Kage audit: DATABASE_UNAVAILABLE'));},15000);
@@ -40,4 +43,4 @@ try {
     finally { cleaning = false; }
   }, 60000);
   for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { clearInterval(cleanup); clearInterval(scheduleTimer); worker.stop(); bot.client.destroy(); server.close(() => process.exit(0)); });
-} catch { console.error('KAGE-STARTUP: não foi possível iniciar. Confira ambiente, banco e Discord; nenhum segredo é exibido.'); process.exitCode = 1; }
+} catch (e) { console.error('KAGE-STARTUP:', e?.name || 'Error', e?.code ?? '', e?.codeName ?? ''); process.exitCode = 1; }

@@ -45,7 +45,8 @@ export function auditEnvironment(env = {}) {
     const secret = text(env.SESSION_SECRET);
     if (secret.length < 32) add(checks, 'session.length', 'fail', 'SESSION_SECRET precisa ter pelo menos 32 caracteres.');
     else if (new Set(secret).size < 8) add(checks, 'session.variety', 'warn', 'SESSION_SECRET tem pouca variedade de caracteres.');
-    if (present(env.SESSION_ENCRYPTION_KEY) && secret === text(env.SESSION_ENCRYPTION_KEY)) add(checks, 'session.reuse', 'warn', 'SESSION_ENCRYPTION_KEY deve ser diferente de SESSION_SECRET.');
+    if (env.NODE_ENV === 'production' && !present(env.SESSION_ENCRYPTION_KEY)) add(checks, 'session.reuse', 'fail', 'SESSION_ENCRYPTION_KEY é obrigatória e deve ser diferente de SESSION_SECRET em produção.');
+    else if (present(env.SESSION_ENCRYPTION_KEY) && secret === text(env.SESSION_ENCRYPTION_KEY)) add(checks, 'session.reuse', env.NODE_ENV === 'production' ? 'fail' : 'warn', 'SESSION_ENCRYPTION_KEY deve ser diferente de SESSION_SECRET.');
   }
   if (present(env.SESSION_ENCRYPTION_KEY) && text(env.SESSION_ENCRYPTION_KEY).length < 32) add(checks, 'encryption.length', 'fail', 'SESSION_ENCRYPTION_KEY precisa ter pelo menos 32 caracteres.');
   if (present(env.PORT) && (!/^\d+$/.test(text(env.PORT)) || Number(env.PORT) < 1 || Number(env.PORT) > 65535)) add(checks, 'port.range', 'fail', 'PORT precisa ser um número entre 1 e 65535.');

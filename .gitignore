@@ -8,3 +8,8 @@ coverage/
 *.tgz
 *.tar.gz
 artifacts/
+*.pem
+*.key
+*.zip
+backups/
+uploads/
